@@ -60,15 +60,32 @@
     }
     .ac.show { display: block; }
     .ac-item {
-      padding: 10px 12px; font: 12px/1.4 ui-monospace, Consolas, monospace;
-      cursor: pointer; display: flex; justify-content: space-between; gap: 10px;
-      -webkit-user-select: none; user-select: none;
+      padding: 10px 12px; font: 13px/1.45 ui-monospace, Consolas, monospace;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      -webkit-user-select: none; user-select: none; border-bottom: 1px solid #2a2a36;
     }
+    .ac-item:last-child { border-bottom: none; }
     .ac-item:hover, .ac-item.on { background: #2a2a3e; }
-    .ac-item .n { color: var(--blue); word-break: break-all; }
+    .ac-item .n { color: var(--blue); word-break: break-all; flex: 1; }
     .ac-item .k { font-size: 0.65rem; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
     .ac-item .k.api { color: var(--yellow); }
     .ac-item .k.cb { color: var(--green); }
+    .ac-item .k.kw { color: var(--peach, #fab387); }
+    #apiTip {
+      position: absolute; z-index: 60; left: 12px; right: 12px;
+      max-width: min(96vw, 520px); max-height: 42vh; overflow-y: auto;
+      -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+      background: #2a2a36; border: 1px solid #3d3d50; border-radius: 6px;
+      padding: 10px 12px; font: 12px/1.5 ui-monospace, Consolas, monospace;
+      color: #cdd6f4; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+      pointer-events: none;
+    }
+    #apiTip.show { display: block; }
+    #apiTip .fn { color: #cdd6f4; margin-bottom: 2px; }
+    #apiTip .pn { color: #fab387; }
+    #apiTip .pt { color: #89dceb; word-break: break-word; }
+    #apiTip .ret { color: #cba6f7; margin-top: 2px; }
+    #apiTip .desc { color: #a6adc8; margin-top: 8px; font-family: -apple-system, sans-serif; font-size: 12px; line-height: 1.4; }
     .docs {
       width: min(320px, 100%); background: #16161e; border-left: 1px solid var(--border);
       display: none; flex-direction: column; flex-shrink: 0; overflow: hidden;
@@ -131,6 +148,7 @@
         <textarea id="ed" spellcheck="false" placeholder="// コードを入力…\n// api. のあと → API候補\n// onPlayer など → Callback候補&#10;// Copy / 共有 でスマホでも取り出せます"></textarea>
       </div>
       <div class="ac" id="ac"></div>
+    <div id="apiTip"></div>
     </div>
     <div class="docs" id="docs">
       <div class="docs-h">
@@ -165,7 +183,381 @@
   <div class="toast" id="toast"></div>
   <script>
 const BUILTIN_API = ["addCustomKillfeedMessage", "addFollowingEntityToPlayer", "addQTE", "animateEntity", "applyAuraChange", "applyEffect", "applyHealthChange", "applyImpulse", "applyMeleeHit", "attemptApplyDamage", "attemptCreateAudioEntity", "attemptCreateMeshEntity", "attemptCreateThrowable", "attemptSpawnMob", "attemptWorldChangeBlock", "blockCoordToChunkId", "blockIdToBlockName", "blockNameToBlockId", "broadcastMessage", "broadcastSound", "calcExplosionForce", "canOpenStandardChest", "changePlayerIntoSkin", "checkValid", "chunkIdToBotLeftCoord", "clearDirectionArrow", "clearInventory", "clearKillstreak", "closeChestForPlayer", "configureShopCategory", "configureShopCategoryForPlayer", "copyChunk", "createEnchantmentAttributesForItem", "createItemDrop", "createMobHerd", "createShopItem", "createShopItemForPlayer", "deleteAllItems", "deleteAllLobbyDbValues", "deleteAllPlayerDbValues", "deleteAudioEntity", "deleteItemDrop", "deleteLobbyDbValue", "deleteMeshEntity", "deletePlayerDbValue", "deleteQTE", "deleteShopItem", "deleteThrowable", "despawnMob", "editItemCraftingRecipes", "findItem", "findStandardChestItem", "forceRespawn", "getAuraInfo", "getBlock", "getBlockCoordinatesPlayerStandingOn", "getBlockData", "getBlockId", "getBlockSolidity", "getBlockTypesPlayerStandingOn", "getChunk", "getClientOption", "getCraftingRecipesForPlayer", "getCurrentKillstreak", "getDefaultMobSetting", "getEffectLevel", "getEffects", "getEmptyChunk", "getEntitiesInRect", "getEntityHeading", "getEntityName", "getEntityRotation", "getEntityType", "getHealth", "getHeldItem", "getInitialItemMetadata", "getInventoryFreeSlotCount", "getInventoryItemAmount", "getItemDropName", "getItemIDsOverlappingWithPlayer", "getItemSlot", "getItemStat", "getLifeformScale", "getLobbyDbValue", "getLobbyName", "getLobbyType", "getMetaInfo", "getMobAiState", "getMobDbId", "getMobIds", "getMobSetting", "getMoonstoneChestItems", "getMoonstoneChestItemSlot", "getNumMobs", "getNumPlayers", "getOtherEntitySetting", "getPlayerCosmetic", "getPlayerDbId", "getPlayerDbValue", "getPlayerFacingInfo", "getPlayerGamemode", "getPlayerId", "getPlayerIdFromDbId", "getPlayerIds", "getPlayerPartyWhenJoined", "getPlayerPhysicsState", "getPlayerTargetInfo", "getPosition", "getQueuedStatus", "getSelectedInventorySlotI", "getShieldAmount", "getStandardChestFreeSlotCount", "getStandardChestItemAmount", "getStandardChestItems", "getStandardChestItemSlot", "getUnitCoordinatesLifeformWithin", "getVelocity", "giveItem", "giveStandardChestItem", "hasActiveQTE", "hasEffect", "hasItem", "initiateMiddleScreenBar", "inventoryIsFull", "isAlive", "isBlockInLoadedChunk", "isInsideRect", "isMobile", "isNearInterrupt", "isPlayerCrouching", "isPublicLobby", "kickPlayer", "killLifeform", "matchmakePlayer", "now", "openChestForPlayer", "openShop", "passifyHostility", "playClientPredictedSound", "playerIsInGame", "playerIsLoggedIn", "playParticleEffect", "playSound", "preventFallDamageNextGrounding", "progressBarUpdate", "queueCrosshairText", "queueMiddleTextLower", "queueMiddleTextUpper", "raycastForBlock", "removeAppliedSkin", "removeEffect", "removeFollowingEntityFromPlayer", "removeFromQueue", "removeItemCraftingRecipes", "removeItemName", "removeItemNameFromStandardChest", "removeMiddleScreenBar", "resetCanChangeBlock", "resetCanChangeBlockRect", "resetCanChangeBlockType", "resetCanPickUpItem", "resetItemCraftingRecipes", "resetShopItemForPlayer", "scalePlayerMeshNodes", "sendFlyingMiddleMessage", "sendHitmarker", "sendMessage", "sendOverShopInfo", "sendTopRightHelper", "setAuraLevel", "setBlock", "setBlockData", "setBlockRect", "setBlockWalls", "setCallbackValueFallback", "setCameraDirection", "setCameraZoom", "setCanChangeBlock", "setCanChangeBlockRect", "setCanChangeBlockType", "setCantChangeBlock", "setCantChangeBlockRect", "setCantChangeBlockType", "setCantPickUpItem", "setClientOption", "setClientOptions", "setClientOptionToDefault", "setDefaultMobSetting", "setDirectionArrow", "setEntityHeading", "setEntityRotation", "setEveryoneSettingForPlayer", "setHealth", "setItemAmount", "setItemSlot", "setItemStat", "setLifeformScale", "setLobbyDbValue", "setMaxPlayers", "setMobAiState", "setMobSetting", "setMoonstoneChestItemSlot", "setOtherEntitySetting", "setOtherEntitySettings", "setOtherEntitySettingToDefault", "setPlayerDbValue", "setPlayerGamemode", "setPlayerOpacity", "setPlayerOpacityForOnePlayer", "setPlayerPhysicsState", "setPlayerPose", "setPosition", "setSelectedInventorySlotI", "setShieldAmount", "setStandardChestItemSlot", "setTargetedPlayerSettingForEveryone", "setTotalAura", "setVelocity", "setWalkThroughRect", "setWalkThroughType", "shakePlayerCamera", "showShopTutorial", "updateAudioEntity", "updateEntityNodeMeshAttachment", "updateMeshEntity", "updateMeshParticleSystems", "updateShopItem", "updateShopItemForPlayer"];
-const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "onBlockStandStart", "onBlockStandStop", "onChestUpdated", "onChunkLoaded", "onClientOptionUpdated", "onClose", "onCreateBloxdMeshEntity", "onEntityCollision", "onInventoryUpdated", "onItemDropCreated", "onMobDamagingOtherMob", "onMobDamagingPlayer", "onMobDespawned", "onMobKilledOtherMob", "onMobKilledPlayer", "onMobSettingUpdated", "onPlayerAltAction", "onPlayerAttack", "onPlayerAttemptAltAction", "onPlayerAttemptCraft", "onPlayerAttemptOpenChest", "onPlayerAttemptSpawnMob", "onPlayerBoughtShopItem", "onPlayerBreakMeshEntity", "onPlayerChangeBlock", "onPlayerChat", "onPlayerClick", "onPlayerClickUp", "onPlayerCraft", "onPlayerDamagingMeshEntity", "onPlayerDamagingMob", "onPlayerDamagingOtherPlayer", "onPlayerDropItem", "onPlayerEnteredVehicle", "onPlayerExitedVehicle", "onPlayerFinishChargingItem", "onPlayerFinishQTE", "onPlayerJoin", "onPlayerJump", "onPlayerKilledMob", "onPlayerKilledOtherPlayer", "onPlayerLeave", "onPlayerMoveInvenItem", "onPlayerMoveInvenItemWithAmt", "onPlayerMoveItemIntoIdxs", "onPlayerMoveItemOutOfInventory", "onPlayerOpenedChest", "onPlayerPickedUpItem", "onPlayerPlayedEmote", "onPlayerPotionEffect", "onPlayerRequestChunk", "onPlayerSelectInventorySlot", "onPlayerSpawnMob", "onPlayerStartChargingItem", "onPlayerSwapInvenSlots", "onPlayerThrowableHitTerrain", "onPlayerToggledShopMenu", "onPlayerUsedThrowable", "onRespawnRequest", "onTaskClaimed", "onTouchscreenActionButton", "onWorldAttemptDespawnMob", "onWorldAttemptSpawnMob", "onWorldChangeBlock", "onWorldSpawnMob", "playerCommand", "tick"];
+        const API_DETAIL = {
+"addCustomKillfeedMessage":{d:"Add a custom killfeed message to the killfeed",r:"void",p:[{n:"killer",t:"{ eId: EntityId } | { name: string; colour: string }"},{n:"victim",t:"{ eId: EntityId } | { name: string; colour: string }"},{n:"withItem",t:"string"}]},
+"addFollowingEntityToPlayer":{d:"Add following entity to player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"eId",t:"EntityId"},{n:"offset",t:"number[]"},{n:"followsPlayerRotation",t:"boolean"}]},
+"addQTE":{d:"Create and register the UI for the requested quicktime event (QTE) to the screen.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"qteParameters",t:"QTEClientParameters<T>"}]},
+"animateEntity":{d:"Animates the given entity. Pass `null` for `animationSchema` to stop the entity's current animation (the",r:"void",p:[{n:"entityId",t:"EntityId"},{n:"animationSchema",t:"AnimationSchema | BlockbenchAnimationSchema | null"},{n:"initialTimeFraction",t:"number"},{n:"animationSpeed",t:"number"}]},
+"applyAuraChange":{d:"Add (or remove if negative) aura to a player. Will not go over max level or under 0",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"auraDiff",t:"number"}]},
+"applyEffect":{d:"Apply an effect to a lifeform.",r:"void",p:[{n:"lifeformId",t:"LifeformId"},{n:"effectName",t:"string"},{n:"duration",t:"number | null"},{n:"customEffectInfo",t:"{ icon?: IngameIconName | ItemName; onEndCb?: () => void; displayName?: string | TranslatedText } & Partial<InbuiltEffectInfo>"}]},
+"applyHealthChange":{d:"`boolean`",r:"void",p:[{n:"lifeformId",t:"LifeformId"},{n:"changeAmount",t:"number"},{n:"whoDidDamage",t:"LifeformId | { lifeformId: LifeformId; withItem: string }"},{n:"broadcastLifeformHurt",t:"boolean"}]},
+"applyImpulse":{d:"Apply an impulse to an entity",r:"void",p:[{n:"eId",t:"EntityId"},{n:"xImpulse",t:"number"},{n:"yImpulse",t:"number"},{n:"zImpulse",t:"number"}]},
+"applyMeleeHit":{d:"Make it as if hittingEId hit hitEId",r:"void",p:[{n:"hittingEId",t:"LifeformId"},{n:"hitEId",t:"LifeformId"},{n:"dirFacing",t:"number[]"},{n:"bodyPartHit",t:"PNull<LifeformBodyPart>"},{n:"overrides",t:"{ damage?: PNull<number> heldItemName?: PNull<string> horizontalKbMultiplier?: number verticalKbMultiplier?: number }"}]},
+"attemptApplyDamage":{d:"Apply damage to a lifeform.",r:"void",p:[{n:"{ eId, hitEId, attemptedDmgAmt, withItem, bodyPartHit = undefined, attackDir = undefined, showCritParticles = false, reduceVerticalKbVelocity = true, horizontalKbMultiplier = 1, verticalKbMultiplier = 1, broadcastEntityHurt = true, attackCooldownSettings = null, hittingSoundOverride = null, ignoreOtherEntitySettingCanAttack = false, isTrueDamage = false, damagerDbId = null, }",t:"PlayerAttemptDamageOtherPlayerOpts"}]},
+"attemptCreateAudioEntity":{d:"Create an invisible audio entity at a world position that loops a sound to",r:"void",p:[{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"soundName",t:"string"},{n:"volume",t:"number"},{n:"options",t:"{ refDistance?: number maxHearDist?: number rate?: number }"}]},
+"attemptCreateMeshEntity":{d:"Try to create a mesh entity. This creates an entity whose mesh position is synced with clients.",r:"void",p:[{n:"type",t:"MeshType"},{n:"opts",t:"MeshEntityOpts[MeshType]"},{n:"name",t:"string"},{n:"physicsOptions",t:"MeshEntityPhysicsOpts"},{n:"initiatorId",t:"EntityId"}]},
+"attemptCreateThrowable":{d:"Try to create a throwable entity.",r:"void",p:[{n:"throwerEId",t:"EntityId"},{n:"itemName",t:"ThrowableItem"},{n:"position",t:"[number, number, number]"},{n:"direction",t:"[number, number, number]"},{n:"velocityMult",t:"number"},{n:"damageMult",t:"number"},{n:"gravityMult",t:"number"},{n:"attributes",t:"ItemAttributes"}]},
+"attemptSpawnMob":{d:"Try to spawn a mob into the world at a given position. Returns null on failure.",r:"void",p:[{n:"mobType",t:"TMobType"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"opts",t:"MobSpawnOpts<TMobType>"}]},
+"attemptWorldChangeBlock":{d:"Initiate a block change \"by the world\".",r:"void",p:[{n:"initiatorDbId",t:"PNull<PlayerDbId>"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"blockName",t:"BlockName"},{n:"extraInfo",t:"WorldBlockChangedInfo"}]},
+"blockCoordToChunkId":{d:"Get the unique id of the chunk containing pos in the current map",r:"void",p:[{n:"pos",t:"number[]"}]},
+"blockIdToBlockName":{d:"Goes from block id to block name. The reverse of blockNameToBlockId",r:"void",p:[{n:"blockId",t:"BlockId"}]},
+"blockNameToBlockId":{d:"Get the numeric id of a block used in the ndarrays returned from getChunk",r:"void",p:[{n:"blockName",t:"BlockName"},{n:"allowInvalidBlock",t:"boolean"}]},
+"broadcastMessage":{d:"Send a message to everyone",r:"void",p:[{n:"message",t:"string | CustomTextStyling"},{n:"style",t:"{ fontWeight?: number | string; color?: string; colour?: string }"}]},
+"broadcastSound":{d:"See documentation for api.playSound",r:"void",p:[{n:"soundName",t:"string"},{n:"volume",t:"number"},{n:"rate",t:"number"},{n:"posSettings",t:"{ playerIdOrPos: PlayerId | number[] maxHearDist?: number refDistance?: number }"},{n:"exceptPlayerId",t:"PlayerId"}]},
+"calcExplosionForce":{d:"` { force: [number, number, number]; forceFrac: number; } `",r:"void",p:[{n:"eId",t:"EntityId"},{n:"explosionType",t:"ExplosionType"},{n:"knockbackFactor",t:"number"},{n:"explosionRadius",t:"number"},{n:"explosionPos",t:"number[]"},{n:"ignoreProjectiles",t:"boolean"}]},
+"canOpenStandardChest":{d:"Checks if a player is able to open a chest at a given location,",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"chestX",t:"number"},{n:"chestY",t:"number"},{n:"chestZ",t:"number"}]},
+"changePlayerIntoSkin":{d:"Change a part of a player's skin.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"cosmeticType",t:"CosmeticType"},{n:"cosmeticName",t:"CosmeticName"}]},
+"checkValid":{d:"Check your game (and, optionally, a entity) is still valid and executing.",r:"void",p:[{n:"entityId",t:"PNull<EntityId>"}]},
+"chunkIdToBotLeftCoord":{d:"Get the co-ordinates of the block in the chunk with the lowest x, y, and z co-ordinates",r:"void",p:[{n:"chunkId",t:"string"}]},
+"clearDirectionArrow":{d:"Clear a directional arrow from the player's screen.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"id",t:"PNull<string>"}]},
+"clearInventory":{d:"Clear the players inventory",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"clearKillstreak":{d:"Clears the player's current killstreak",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"closeChestForPlayer":{d:"Close a chest for a player.",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"configureShopCategory":{d:"Set properties of a shop category.",r:"void",p:[{n:"categoryKey",t:"ShopCategoryKey"},{n:"config",t:"ShopCategoryConfig"}]},
+"configureShopCategoryForPlayer":{d:"Configure a shop category for a specific player.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"categoryKey",t:"ShopCategoryKey"},{n:"config",t:"ShopCategoryConfig"}]},
+"copyChunk":{d:"Copies chunk from one position to another.",r:"void",p:[{n:"fromPos",t:"number[]"},{n:"toPos",t:"number[]"}]},
+"createEnchantmentAttributesForItem":{d:"Create enchantment attributes for an item at a given enchantment level. Same behaviour as if that level of enchant was selected for the item in an enchanting table.",r:"void",p:[{n:"itemName",t:"ItemName"},{n:"enchantmentLevel",t:"number"}]},
+"createItemDrop":{d:"Create a dropped item.",r:"void",p:[{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"itemName",t:"ItemName"},{n:"amount",t:"PNull<number>"},{n:"mergeItems",t:"boolean"},{n:"attributes",t:"ItemAttributes"},{n:"timeTillDespawn",t:"number"},{n:"dropperId",t:"PNull<LifeformId>"},{n:"options",t:"ItemDropOptions"}]},
+"createMobHerd":{d:"Create a mob herd. A mob herd represents a collection of mobs that move together.",r:"void",p:[]},
+"createShopItem":{d:"Create a new shop item under the given category.",r:"void",p:[{n:"categoryKey",t:"ShopCategoryKey"},{n:"itemKey",t:"ShopItemKey"},{n:"item",t:"ShopItem"}]},
+"createShopItemForPlayer":{d:"Create a new shop item for a specific player.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"categoryKey",t:"ShopCategoryKey"},{n:"itemKey",t:"ShopItemKey"},{n:"item",t:"ShopItem"}]},
+"deleteAllItems":{d:"Deletes all items dropped in the world",r:"void",p:[]},
+"deleteAllLobbyDbValues":{d:"Deletes all database values that are saved per lobby.",r:"void",p:[]},
+"deleteAllPlayerDbValues":{d:"Deletes all database values that are saved per player.",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"deleteAudioEntity":{d:"Delete an audio entity by its entity ID (returned by attemptCreateAudioEntity).",r:"void",p:[{n:"eId",t:"EntityId"}]},
+"deleteItemDrop":{d:"Delete an item drop by item drop entity ID",r:"void",p:[{n:"itemId",t:"EntityId"}]},
+"deleteLobbyDbValue":{d:"Deletes a database value that is saved per lobby.",r:"void",p:[{n:"key",t:"string"}]},
+"deleteMeshEntity":{d:"Delete a mesh entity",r:"void",p:[{n:"eId",t:"EntityId"}]},
+"deletePlayerDbValue":{d:"Deletes a database value that is saved per player.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"key",t:"string"}]},
+"deleteQTE":{d:"Delete a quicktime event from the screen",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"id",t:"QTERequestId"}]},
+"deleteShopItem":{d:"Delete an existing shop item.",r:"void",p:[{n:"categoryKey",t:"ShopCategoryKey"},{n:"itemKey",t:"ShopItemKey"}]},
+"deleteThrowable":{d:"Delete a throwable entity before it automatically removes itself.",r:"void",p:[{n:"eId",t:"EntityId"}]},
+"despawnMob":{d:"Dispose of a mob's state and remove them from the world without triggering \"on death\" flows.",r:"void",p:[{n:"mobId",t:"MobId"}]},
+"editItemCraftingRecipes":{d:"Edit the crafting recipes for a player.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"ItemName"},{n:"recipesForItem",t:"RecipesForItem"}]},
+"findItem":{d:"Finds the index of a particular item in a player's inventory.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"ItemName"}]},
+"findStandardChestItem":{d:"Find the index of a particular item in a standard chest",r:"void",p:[{n:"chestPos",t:"number[]"},{n:"itemName",t:"ItemName"}]},
+"forceRespawn":{d:"Force respawn a player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"respawnPos",t:"number[]"}]},
+"getAuraInfo":{d:"Get the aura info for a player",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getBlock":{d:"Get the name of a block.",r:"void",p:[{n:"x",t:"number | number[]"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"getBlockCoordinatesPlayerStandingOn":{d:"Get the co-ordinates of the blocks the player is standing on as a list. For example, if the center of the player is at 0,0,0",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getBlockData":{d:"Get stored data about a block in a performant manner. Data is cleared when block changes.",r:"void",p:[{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"getBlockId":{d:"Used to get the block id at a specific position.",r:"void",p:[{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"getBlockSolidity":{d:"Returns whether a block is solid or not.",r:"void",p:[{n:"x",t:"number | number[]"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"getBlockTypesPlayerStandingOn":{d:"Get the types of block the player is standing on",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getChunk":{d:"Only use this instead of getBlock if you REALLY need the performance (i.e. you are iterating over tens of thousands of blocks)",r:"void",p:[{n:"pos",t:"number[]"}]},
+"getClientOption":{d:"Returns the current value of a client option",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"option",t:"PassedOption"}]},
+"getCraftingRecipesForPlayer":{d:"Read a player's current crafting recipe set, keyed by output item name. Includes any",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getCurrentKillstreak":{d:"Gets the player's current killstreak",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getDefaultMobSetting":{d:"Returns the current default value for a mob setting.",r:"void",p:[{n:"mobType",t:"TMobType"},{n:"setting",t:"TMobSetting"}]},
+"getEffectLevel":{d:"Get the level of an effect on a lifeform, or 0 if they don't have it.",r:"void",p:[{n:"lifeformId",t:"LifeformId"},{n:"name",t:"string"}]},
+"getEffects":{d:"Get all the effects currently applied to a lifeform.",r:"void",p:[{n:"lifeformId",t:"LifeformId"}]},
+"getEmptyChunk":{d:"Use this to get a chunk ndarray you can edit and set in resetChunk.",r:"void",p:[]},
+"getEntitiesInRect":{d:"Get the entities in the rect between [minX, minY, minZ] and [maxX, maxY, maxZ]",r:"void",p:[{n:"minCoords",t:"number[]"},{n:"maxCoords",t:"number[]"}]},
+"getEntityHeading":{d:"`number`",r:"void",p:[{n:"entityId",t:"EntityId"}]},
+"getEntityName":{d:"Get the in game name of an entity.",r:"void",p:[{n:"entityId",t:"EntityId"}]},
+"getEntityRotation":{d:"Get the rotation for a server-auth entity.",r:"void",p:[{n:"entityId",t:"EntityId"}]},
+"getEntityType":{d:"`EntityType`",r:"void",p:[{n:"entityId",t:"EntityId"}]},
+"getHealth":{d:"Get the current health of an entity.",r:"void",p:[{n:"entityId",t:"PlayerId"}]},
+"getHeldItem":{d:"Get the currently held item of a player",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getInitialItemMetadata":{d:"Get the metadata about a block or item before stats have been modified by any client options",r:"void",p:[{n:"itemName",t:"string"}]},
+"getInventoryFreeSlotCount":{d:"Get the amount of free slots in a player's inventory.",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getInventoryItemAmount":{d:"The amount of an itemName a player has.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"ItemName"}]},
+"getItemDropName":{d:"Gets the item name of a dropped item",r:"void",p:[{n:"itemEId",t:"EntityId"}]},
+"getItemIDsOverlappingWithPlayer":{d:"Returns all items overlapping with the given player",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getItemSlot":{d:"Get the item at a specific index",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemSlotIndex",t:"number"}]},
+"getItemStat":{d:"Get stat info about a block or item",r:"void",p:[{n:"lifeformId",t:"PNull<LifeformId>"},{n:"itemName",t:"ItemName"},{n:"stat",t:"K"}]},
+"getLifeformScale":{d:"Get the scale of a lifeform.",r:"void",p:[{n:"lifeformId",t:"LifeformId"}]},
+"getLobbyDbValue":{d:"Gets a database value that is saved per lobby.",r:"void",p:[{n:"key",t:"string"}]},
+"getLobbyName":{d:"Get the name of the lobby this game is running in.",r:"void",p:[]},
+"getLobbyType":{d:"Returns if the current lobby the game is running in is special - e.g. a discord guild or dm, or simply a standard lobby",r:"void",p:[]},
+"getMetaInfo":{d:"Splits the block name by '|'. If no meta info, metaInfo is ''",r:"void",p:[{n:"blockName",t:"BlockName | null | undefined"}]},
+"getMobAiState":{d:"Gets the current AI state for the given mob.",r:"void",p:[{n:"mobId",t:"MobId"}]},
+"getMobDbId":{d:"Gets the persistent database ID for the given mob.",r:"void",p:[{n:"mobId",t:"MobId"}]},
+"getMobIds":{d:"Get the mob IDs of all mobs in the world.",r:"void",p:[]},
+"getMobSetting":{d:"Get the current value of a mob setting for a specific mob.",r:"void",p:[{n:"mobId",t:"MobId"},{n:"setting",t:"TMobSetting"},{n:"returnDefaultIfNotOverridden",t:"boolean"}]},
+"getMoonstoneChestItemSlot":{d:"Get the item in a player's moonstone chest slot. Null if empty",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"idx",t:"number"}]},
+"getMoonstoneChestItems":{d:"Get all the items from a moonstone chest in order. Use this instead of repetitive calls to getMoonstoneChestItemSlot",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getNumMobs":{d:"Get the number of mobs in the world.",r:"void",p:[]},
+"getNumPlayers":{d:"Get the number of players in the room",r:"void",p:[]},
+"getOtherEntitySetting":{d:"Get the value of a player's other-entity setting for a specific entity.",r:"void",p:[{n:"relevantPlayerId",t:"PlayerId"},{n:"targetedEntityId",t:"EntityId"},{n:"settingName",t:"Setting"}]},
+"getPlayerCosmetic":{d:"Get a single equipped cosmetic for a player.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"cosmeticType",t:"CosmeticType"}]},
+"getPlayerDbId":{d:"Given a player, get their permanent identifier that doesn't change when leaving and re-entering",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getPlayerDbValue":{d:"Gets a database value that is saved per player.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"key",t:"string"}]},
+"getPlayerFacingInfo":{d:"Get the position of a player's camera and the direction (both in Euclidean and spherical coordinates) they are attempting to use an item.",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getPlayerGamemode":{d:"Get the gamemode of a player.",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getPlayerId":{d:"Given the name of a player, get their id",r:"void",p:[{n:"playerName",t:"string"}]},
+"getPlayerIdFromDbId":{d:"Returns null if player not in lobby",r:"void",p:[{n:"dbId",t:"PlayerDbId"}]},
+"getPlayerIds":{d:"Get all the player ids.",r:"void",p:[]},
+"getPlayerPartyWhenJoined":{d:"Returns the party that the player was in when they joined the game. The returned object contains the playerDbIds, as well",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getPlayerPhysicsState":{d:"Get physics state for player",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getPlayerTargetInfo":{d:"Get the position of a player's target block and the block adjacent to it (e.g. where a block would be placed)",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getPosition":{d:"Get position of a player / entity.",r:"void",p:[{n:"entityId",t:"EntityId"}]},
+"getQueuedStatus":{d:"Get the status of a queued command.",r:"void",p:[{n:"id",t:"QueuedCommandId"}]},
+"getSelectedInventorySlotI":{d:"Get a player's currently selected inventory slot",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"getShieldAmount":{d:"Get the current shield of an entity.",r:"void",p:[{n:"entityId",t:"EntityId"}]},
+"getStandardChestFreeSlotCount":{d:"Get the amount of free slots in a standard chest",r:"void",p:[{n:"chestPos",t:"number[]"}]},
+"getStandardChestItemAmount":{d:"The amount of an itemName a standard chest has.",r:"void",p:[{n:"chestPos",t:"number[]"},{n:"itemName",t:"ItemName"}]},
+"getStandardChestItemSlot":{d:"Get the item at a chest slot. Null if empty otherwise format {name: itemName, amount: amountOfItem}",r:"void",p:[{n:"chestPos",t:"number[]"},{n:"idx",t:"number"}]},
+"getStandardChestItems":{d:"Get all the items from a standard chest in order. Use this instead of repetitive calls to getStandardChestItemSlot",r:"void",p:[{n:"chestPos",t:"number[]"}]},
+"getUnitCoordinatesLifeformWithin":{d:"Get the up to 12 unit co-ordinates the lifeform is located within",r:"void",p:[{n:"lifeformId",t:"LifeformId"}]},
+"getVelocity":{d:"Get the velocity of an entity",r:"void",p:[{n:"eId",t:"EntityId"}]},
+"giveItem":{d:"Inventory stuff",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"ItemName"},{n:"itemAmount",t:"number"},{n:"attributes",t:"ItemAttributes"}]},
+"giveStandardChestItem":{d:"Give a standard chest an item and a certain amount of that item.",r:"void",p:[{n:"chestPos",t:"number[]"},{n:"itemName",t:"ItemName"},{n:"itemAmount",t:"number"},{n:"playerId",t:"PlayerId"},{n:"attributes",t:"ItemAttributes"}]},
+"hasActiveQTE":{d:"Check whether the player has any qteRequests",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"hasEffect":{d:"Check if a lifeform has an effect.",r:"void",p:[{n:"lifeformId",t:"LifeformId"},{n:"name",t:"string"},{n:"atOrAboveLevel",t:"number"}]},
+"hasItem":{d:"Whether a player has an item",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"ItemName"}]},
+"initiateMiddleScreenBar":{d:"This will initiate the MiddleScreenBar, starting at empty and filling up to full over the given duration.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"duration",t:"number"},{n:"chargeExpiresAutomatically",t:"boolean"},{n:"horizontalBarRemOffset",t:"number"}]},
+"inventoryIsFull":{d:"Whether the player has space in their inventory to get new blocks",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"isAlive":{d:"Whether a lifeform is alive or dead (or on the respawn screen, in a player's case).",r:"void",p:[{n:"lifeformId",t:"LifeformId"}]},
+"isBlockInLoadedChunk":{d:"Check if the block at a specific position is in a loaded chunk.",r:"void",p:[{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"isInsideRect":{d:"Check if a position is within a cubic rectangle",r:"void",p:[{n:"coordsToCheck",t:"number[]"},{n:"pos1",t:"number[]"},{n:"pos2",t:"number[]"},{n:"addOneToMax",t:"boolean"}]},
+"isMobile":{d:"Whether the player is on a mobile device or a computer.",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"isNearInterrupt":{d:"Returns true if your code is about to be interrupted for exceeding its time budget.",r:"void",p:[]},
+"isPlayerCrouching":{d:"Check whether a player is crouching",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"isPublicLobby":{d:"Integer lobby names are public",r:"void",p:[]},
+"kickPlayer":{d:"",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"reason",t:"string"}]},
+"killLifeform":{d:"Kill a lifeform.",r:"void",p:[{n:"lifeformId",t:"LifeformId"},{n:"whoKilled",t:"LifeformId | { lifeformId: LifeformId; withItem: string }"}]},
+"matchmakePlayer":{d:"Tell a player to disconnect from the current lobby and join a new one.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"game",t:"string"},{n:"lobbyName",t:"string"}]},
+"now":{d:"Obtain Date.now() value saved at start of current game tick",r:"void",p:[]},
+"openChestForPlayer":{d:"Open a chest for a player.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"openShop":{d:"Open the shop UI for a player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"toggle",t:"boolean"},{n:"forceCategoryKey",t:"PNull<ShopCategoryKey>"},{n:"onlyIfNonEmpty",t:"boolean"}]},
+"passifyHostility":{d:"Clears any aggro the mob has towards the given lifeform.",r:"void",p:[{n:"mobId",t:"MobId"},{n:"targetLifeformId",t:"LifeformId"}]},
+"playClientPredictedSound":{d:"See documentation for api.playSound",r:"void",p:[{n:"soundName",t:"string"},{n:"volume",t:"number"},{n:"rate",t:"number"},{n:"posSettings",t:"{ playerIdOrPos: PlayerId | number[] maxHearDist?: number refDistance?: number }"},{n:"predictedBy",t:"PlayerId"}]},
+"playParticleEffect":{d:"Play particle effect on all clients, or only on some clients if clientPredictedBy is specified",r:"void",p:[{n:"opts",t:"TempParticleSystemOpts | ParticlePresetOpts"},{n:"clientPredictedBy",t:"PlayerId"}]},
+"playSound":{d:"",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"soundName",t:"string"},{n:"volume",t:"number"},{n:"rate",t:"number"},{n:"posSettings",t:"{ playerIdOrPos: PlayerId | number[] maxHearDist?: number refDistance?: number }"}]},
+"playerIsInGame":{d:"Whether a player is currently in the game",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"playerIsLoggedIn":{d:"`boolean`",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"preventFallDamageNextGrounding":{d:"Prevents the player from taking fall damage next time they land on the ground",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"progressBarUpdate":{d:"Update the progress bar in the bottom right corner.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"toFraction",t:"number"},{n:"toDuration",t:"number"}]},
+"queueCrosshairText":{d:"Schedule text to be displayed in the crosshair.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"text",t:"string | CustomTextStyling"},{n:"duration",t:"number"}]},
+"queueMiddleTextLower":{d:"Schedule small text to be displayed in the middle of the screen (middleTextLower).",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"text",t:"string | CustomTextStyling"},{n:"duration",t:"number"}]},
+"queueMiddleTextUpper":{d:"Schedule large text to be displayed in the middle of the screen (middleTextUpper).",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"text",t:"string | CustomTextStyling"},{n:"duration",t:"number"}]},
+"raycastForBlock":{d:"Raycast for a block in the world.",r:"void",p:[{n:"fromPos",t:"number[]"},{n:"dirVec",t:"number[]"}]},
+"removeAppliedSkin":{d:"Remove gamemode-applied skin from a player",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"removeEffect":{d:"Remove an effect from a lifeform.",r:"void",p:[{n:"lifeformId",t:"LifeformId"},{n:"name",t:"string"}]},
+"removeFollowingEntityFromPlayer":{d:"Remove following entity from player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"entityEId",t:"EntityId"}]},
+"removeFromQueue":{d:"Remove a queued command from the queue.",r:"void",p:[{n:"id",t:"QueuedCommandId"}]},
+"removeItemCraftingRecipes":{d:"Removes crafting recipes",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"PNull<string>"}]},
+"removeItemName":{d:"Remove an amount of item from a player's inventory",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"ItemName"},{n:"amount",t:"number"}]},
+"removeItemNameFromStandardChest":{d:"Remove an amount of item from a standardChest inventory",r:"void",p:[{n:"chestPos",t:"number[]"},{n:"itemName",t:"ItemName"},{n:"amount",t:"number"},{n:"playerId",t:"PlayerId"}]},
+"removeMiddleScreenBar":{d:"If there is any current middle screen bar running, this will hide it",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"resetCanChangeBlock":{d:"Remove any previous can/cant change block settings for a player at a specific co-ordinate",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"resetCanChangeBlockRect":{d:"Remove any previous can/cant change block rect settings for a player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"pos1",t:"number[]"},{n:"pos2",t:"number[]"}]},
+"resetCanChangeBlockType":{d:"Remove any previous can/cant change block type settings for a player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"blockName",t:"BlockName"}]},
+"resetCanPickUpItem":{d:"Reset a player's ability to pick up an item. itemId returned by createItemDrop",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemId",t:"EntityId"}]},
+"resetItemCraftingRecipes":{d:"Reset the crafting recipes for a given back to its original bloxd state",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"PNull<string>"}]},
+"resetShopItemForPlayer":{d:"Delete a specific player's overrides for a shop item.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"categoryKey",t:"ShopCategoryKey"},{n:"itemKey",t:"ShopItemKey"}]},
+"scalePlayerMeshNodes":{d:"Scale node of a player's mesh by 3d vector.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"nodeScales",t:"EntityMeshScalingMap"}]},
+"sendFlyingMiddleMessage":{d:"Send a flying middle message to a specific player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"message",t:"string | CustomTextStyling"},{n:"distanceFromAction",t:"number"},{n:"lifetimeMs",t:"number"}]},
+"sendHitmarker":{d:"Show a hitmarker on the player's screen (the X-shaped crosshair flash indicating a successful hit).",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"isCrit",t:"boolean"},{n:"directionVector",t:"PNull<number[]>"}]},
+"sendMessage":{d:"Send a message to a specific player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"message",t:"string | CustomTextStyling"},{n:"style",t:"{ fontWeight?: number | string; color?: string }"}]},
+"sendOverShopInfo":{d:"Show a message over the shop in the same place that a shop item's onBoughtMessage is shown.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"info",t:"string | CustomTextStyling"}]},
+"sendTopRightHelper":{d:"",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"icon",t:"string"},{n:"text",t:"string"},{n:"opts",t:"{ duration?: number width?: number height?: number color?: string iconSizeMult?: number textAndIconColor?: string fontSize?: string }"}]},
+"setAuraLevel":{d:"Set the aura level for a player - shortcut for setTotalAura(level * auraPerLevel)",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"level",t:"number"}]},
+"setBlock":{d:"Set a block. Valid names are any block name, including 'Air'",r:"void",p:[{n:"x",t:"number | number[]"},{n:"y",t:"number | BlockName"},{n:"z",t:"number"},{n:"blockName",t:"BlockName"}]},
+"setBlockData":{d:"Store data about a block in a performant manner. Data is cleared when block changes.",r:"void",p:[{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"data",t:"object"}]},
+"setBlockRect":{d:"Helper function that sets all blocks in a rectangle to a specific block.",r:"void",p:[{n:"pos1",t:"number[]"},{n:"pos2",t:"number[]"},{n:"blockName",t:"BlockName"}]},
+"setBlockWalls":{d:"Create walls by providing two opposite corners of the cuboid",r:"void",p:[{n:"pos1",t:"number[]"},{n:"pos2",t:"number[]"},{n:"blockName",t:"BlockName"},{n:"hasFloor",t:"boolean"},{n:"hasCeiling",t:"boolean"}]},
+"setCallbackValueFallback":{d:"Set a default value to be returned by your callback code if it throws an error.",r:"void",p:[{n:"cbName",t:"UserCallbacks"},{n:"value",t:"any"}]},
+"setCameraDirection":{d:"Set the direction the player is looking.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"direction",t:"number[]"}]},
+"setCameraZoom":{d:"Set camera zoom for a player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"zoom",t:"number"}]},
+"setCanChangeBlock":{d:"Let a player change a block at a specific co-ordinate. Useful when client option canChange is false.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"setCanChangeBlockRect":{d:"Make it so a player can Change blocks within two points. Coordinates are inclusive. E.g. if [0, 0, 0] is pos1",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"pos1",t:"number[]"},{n:"pos2",t:"number[]"}]},
+"setCanChangeBlockType":{d:"Lets a player Change a block type. Valid names are any block name, including 'Air'",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"blockName",t:"BlockName"}]},
+"setCantChangeBlock":{d:"Prevents a player from changing a block at a specific co-ordinate. Useful when client option canChange is true.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"setCantChangeBlockRect":{d:"Make it so a player cant Change blocks within two points. Coordinates are inclusive. E.g. if [0, 0, 0] is pos1",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"pos1",t:"number[]"},{n:"pos2",t:"number[]"}]},
+"setCantChangeBlockType":{d:"Stops a player from changing a block type. Valid names are any block name, including 'Air'",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"blockName",t:"BlockName"}]},
+"setCantPickUpItem":{d:"Prevent a player from picking up an item. itemId returned by createItemDrop",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemId",t:"EntityId"}]},
+"setClientOption":{d:"Modify a client option at runtime and send to the client if it changed",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"option",t:"PassedOption"},{n:"value",t:"ClientOptions[PassedOption]"}]},
+"setClientOptionToDefault":{d:"Sets a client option to its default value. This will be the value stored in your game's defaultClientOptions, otherwise Bloxd's default.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"option",t:"ClientOption"}]},
+"setClientOptions":{d:"Modify client options at runtime",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"optionsObj",t:"Partial<ClientOptions>"}]},
+"setDefaultMobSetting":{d:"Set the default value for a mob setting.",r:"void",p:[{n:"mobType",t:"TMobType"},{n:"setting",t:"TMobSetting"},{n:"value",t:"MobSettings<TMobType>[TMobSetting]"}]},
+"setDirectionArrow":{d:"Show a directional arrow indicator on the player's screen pointing toward a world position.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"id",t:"string"},{n:"position",t:"number[]"},{n:"text",t:"PNull<string | CustomTextStyling>"},{n:"showDistance",t:"boolean"},{n:"style",t:"PNull<TextStyle>"}]},
+"setEntityHeading":{d:"",r:"void",p:[{n:"entityId",t:"EntityId"},{n:"newHeading",t:"number"}]},
+"setEntityRotation":{d:"Set the rotation for a server-auth entity.",r:"void",p:[{n:"entityId",t:"EntityId"},{n:"xRotation",t:"number"},{n:"yRotation",t:"number"},{n:"zRotation",t:"number"}]},
+"setEveryoneSettingForPlayer":{d:"Set a player's other-entity setting for every lifeform in the game.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"settingName",t:"Setting"},{n:"settingValue",t:"OtherEntitySettings[Setting]"},{n:"includeNewJoiners",t:"boolean"}]},
+"setHealth":{d:"Set the current health of an entity.",r:"void",p:[{n:"entityId",t:"EntityId"},{n:"newHealth",t:"PNull<number>"},{n:"whoDidDamage",t:"LifeformId | { lifeformId: LifeformId; withItem: string }"},{n:"increaseMaxHealthIfNeeded",t:"boolean"}]},
+"setItemAmount":{d:"Set the amount of an item in an item entity",r:"void",p:[{n:"itemId",t:"EntityId"},{n:"newAmount",t:"number"}]},
+"setItemSlot":{d:"Put an item in a specific index. Default hotbar is indexes 0-9",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemSlotIndex",t:"number"},{n:"itemName",t:"ItemName"},{n:"itemAmount",t:"PNull<number>"},{n:"attributes",t:"ItemAttributes"},{n:"tellClient",t:"boolean"}]},
+"setItemStat":{d:"Set a stat attribute for a block or item",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"ItemName"},{n:"stat",t:"K"},{n:"value",t:"AnyMetadataItem[K]"}]},
+"setLifeformScale":{d:"Set the visual + physical scale of a lifeform. A scale of 1 is the default size,",r:"void",p:[{n:"lifeformId",t:"LifeformId"},{n:"scale",t:"number"}]},
+"setLobbyDbValue":{d:"Sets a database value that is saved per lobby. This persists between sessions.",r:"void",p:[{n:"key",t:"string"},{n:"value",t:"string | number"}]},
+"setMaxPlayers":{d:"Update the max players and soft max players matchmaking will use",r:"void",p:[{n:"softMaxPlayers",t:"number"},{n:"maxPlayers",t:"number"}]},
+"setMobAiState":{d:"Sets the current AI state for the given mob.",r:"void",p:[{n:"mobId",t:"MobId"},{n:"state",t:"TState"},{n:"params",t:"MobAiStateParams<TState>"}]},
+"setMobSetting":{d:"Set the current value of a mob setting for a specific mob.",r:"void",p:[{n:"mobId",t:"MobId"},{n:"setting",t:"TMobSetting"},{n:"value",t:"MobSettings<MobType>[TMobSetting]"}]},
+"setMoonstoneChestItemSlot":{d:"Moonstone chests are a type of chest where a player accesses the same contents no matter the location of the moonstone chest",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"idx",t:"number"},{n:"itemName",t:"ItemName"},{n:"itemAmount",t:"number"},{n:"metadata",t:"ItemAttributes"}]},
+"setOtherEntitySetting":{d:"Set a player's other-entity setting for a specific entity.",r:"void",p:[{n:"relevantPlayerId",t:"PlayerId"},{n:"targetedEntityId",t:"EntityId"},{n:"settingName",t:"Setting"},{n:"settingValue",t:"OtherEntitySettings[Setting]"}]},
+"setOtherEntitySettingToDefault":{d:"Reset a player's other-entity setting for a specific entity to the game's default value.",r:"void",p:[{n:"relevantPlayerId",t:"PlayerId"},{n:"targetedEntityId",t:"EntityId"},{n:"settingName",t:"Setting"}]},
+"setOtherEntitySettings":{d:"Set many of a player's other-entity settings for a specific entity.",r:"void",p:[{n:"relevantPlayerId",t:"PlayerId"},{n:"targetedEntityId",t:"EntityId"},{n:"settingsObject",t:"Partial<OtherEntitySettings>"}]},
+"setPlayerDbValue":{d:"Sets a database value that is saved per player. This persists between sessions and between lobbies for custom games.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"key",t:"string"},{n:"value",t:"string | number"}]},
+"setPlayerGamemode":{d:"Set the gamemode of a player. This is persistent across lobbies for custom games.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"gamemode",t:"WorldGamemode"}]},
+"setPlayerOpacity":{d:"Set a player's opacity",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"opacity",t:"number"}]},
+"setPlayerOpacityForOnePlayer":{d:"Set the level of viewable opacity by one player on another player",r:"void",p:[{n:"playerIdWhoViewsOpacityPlayer",t:"PlayerId"},{n:"playerIdOfOpacityPlayer",t:"PlayerId"},{n:"opacity",t:"number"}]},
+"setPlayerPhysicsState":{d:"Set physics state of player (vehicle type and tier).",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"physicsState",t:"PlayerPhysicsState<PhysicsType>"},{n:"positionOffset",t:"[number, number, number]"}]},
+"setPlayerPose":{d:"Set the pose of the player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"pose",t:"PlayerPose"},{n:"poseOffset",t:"[number, number, number]"}]},
+"setPosition":{d:"Set position of a player / entity.",r:"void",p:[{n:"entityId",t:"EntityId"},{n:"x",t:"number | number[]"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"setSelectedInventorySlotI":{d:"Force the player to have the ith inventory slot selected. E.g. newI 0 makes the player have the 0th inventory slot selected",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"newI",t:"number"}]},
+"setShieldAmount":{d:"Set the current shield of a lifeform.",r:"void",p:[{n:"lifeformId",t:"LifeformId"},{n:"newShieldAmount",t:"number"}]},
+"setStandardChestItemSlot":{d:"",r:"void",p:[{n:"chestPos",t:"number[]"},{n:"idx",t:"number"},{n:"itemName",t:"ItemName"},{n:"itemAmount",t:"number"},{n:"playerId",t:"PlayerId"},{n:"attributes",t:"ItemAttributes"}]},
+"setTargetedPlayerSettingForEveryone":{d:"Set every player's other-entity setting to a specific value for a particular player.",r:"void",p:[{n:"targetedPlayerId",t:"PlayerId"},{n:"settingName",t:"Setting"},{n:"settingValue",t:"OtherEntitySettings[Setting]"},{n:"includeNewJoiners",t:"boolean"}]},
+"setTotalAura":{d:"Sets the total aura for a player. Will not go over max level or under 0",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"totalAura",t:"number"}]},
+"setVelocity":{d:"Set the velocity of an entity",r:"void",p:[{n:"eId",t:"EntityId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"setWalkThroughRect":{d:"Allow a player to walk through (or not walk through) voxels that are located within a given rectangle.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"pos1",t:"number[]"},{n:"pos2",t:"number[]"},{n:"updateType",t:"WalkThroughType"}]},
+"setWalkThroughType":{d:"Allow a player to walk through a type of block. For blocks that are normally solid and not seethrough, the player will experience slight visual glitches while inside the block.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"blockName",t:"BlockName"},{n:"disable",t:"boolean"}]},
+"shakePlayerCamera":{d:"Shake a player's camera.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"intensity",t:"number"},{n:"durationMs",t:"number"}]},
+"showShopTutorial":{d:"Show the shop tutorial for a player. Will not be shown if they have ever seen the shop tutorial in your game before.",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"updateAudioEntity":{d:"Update an audio entity's config (sound, volume, falloff, rate). Only the provided fields",r:"void",p:[{n:"eId",t:"EntityId"},{n:"opts",t:"Partial<AudioEntityOpts>"}]},
+"updateEntityNodeMeshAttachment":{d:"Attach/detach mesh instances to/from an entity",r:"void",p:[{n:"eId",t:"EntityId"},{n:"node",t:"EntityNamedNode"},{n:"type",t:"PNull<MeshType>"},{n:"opts",t:"MeshEntityOpts[MeshType]"},{n:"offset",t:"[number, number, number]"},{n:"rotation",t:"[number, number, number]"}]},
+"updateMeshEntity":{d:"Update a mesh entity. If used on a non-mesh entity, will do nothing.",r:"void",p:[{n:"eId",t:"EntityId"},{n:"type",t:"MeshType"},{n:"opts",t:"MeshEntityOpts[MeshType]"}]},
+"updateMeshParticleSystems":{d:"Updates the particle systems of multiple mesh entities at specified nodes",r:"void",p:[{n:"updates",t:"MeshParticleSystemUpdates"}]},
+"updateShopItem":{d:"Update selected properties of an existing shop item.",r:"void",p:[{n:"categoryKey",t:"ShopCategoryKey"},{n:"itemKey",t:"ShopItemKey"},{n:"changes",t:"Partial<ShopItem>"}]},
+"updateShopItemForPlayer":{d:"Update selected properties of an existing shop item for a specific player.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"categoryKey",t:"ShopCategoryKey"},{n:"itemKey",t:"ShopItemKey"},{n:"changes",t:"Partial<ShopItem>"}]}
+};
+const CB_DETAIL = {
+"doPeriodicSave":{d:"Called every so often.",r:"void",p:[]},
+"onAttemptKillPlayer":{d:"Called when a player is about to be killed",r:"void | \"preventDeath\"",p:[{n:"killedPlayer",t:"PlayerId"},{n:"attackingLifeform?",t:"LifeformId"}]},
+"onBlockStand":{d:"Called when a player stands on a block",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"blockName",t:"BlockName"}]},
+"onBlockStandStart":{d:"Called when a player enters a block. Only called once per block until the player leaves the block.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"blockName",t:"BlockName"}]},
+"onBlockStandStop":{d:"Called when a player leaves a block.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"blockName",t:"BlockName"}]},
+"onChestUpdated":{d:"Called when a chest is updated by a player",r:"void",p:[{n:"initiatorEId",t:"PlayerId"},{n:"isMoonstoneChest",t:"boolean"},{n:"x",t:"number | null"},{n:"y",t:"number | null"},{n:"z",t:"number | null"}]},
+"onChunkLoaded":{d:"Called when a chunk is first loaded",r:"void",p:[{n:"chunkId",t:"string"},{n:"chunk",t:"LoadedChunk"},{n:"wasPersistedChunk",t:"boolean"}]},
+"onClientOptionUpdated":{d:"Called when a client option is updated",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"option",t:"ClientOption"},{n:"value",t:"any"}]},
+"onClose":{d:"Called when the lobby is shutting down",r:"void",p:[{n:"serverIsShuttingDown",t:"boolean"}]},
+"onCreateBloxdMeshEntity":{d:"Called when a mesh entity is created",r:"void",p:[{n:"eId",t:"EntityId"},{n:"type",t:"string"},{n:"initiatorId",t:"EntityId | null"}]},
+"onEntityCollision":{d:"Called when a entity collides with another entity",r:"void",p:[{n:"eId",t:"EntityId"},{n:"otherEId",t:"EntityId"}]},
+"onInventoryUpdated":{d:"Called when a player's inventory is updated",r:"void",p:[{n:"playerId",t:"PlayerId"}]},
+"onItemDropCreated":{d:"Called when an item drop is created",r:"void",p:[{n:"itemEId",t:"EntityId"},{n:"itemName",t:"string"},{n:"itemAmount",t:"number"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"onMobDamagingOtherMob":{d:"Called when a mob is damaging another mob",r:"number | \"preventDamage\"",p:[{n:"attackingMob",t:"MobId"},{n:"damagedMob",t:"MobId"},{n:"damageDealt",t:"number"},{n:"withItem",t:"string"}]},
+"onMobDamagingPlayer":{d:"Called when a mob is damaging a player",r:"number | \"preventDamage\"",p:[{n:"attackingMob",t:"MobId"},{n:"damagedPlayer",t:"PlayerId"},{n:"damageDealt",t:"number"},{n:"withItem",t:"string"}]},
+"onMobDespawned":{d:"Called when a mob is despawned",r:"void",p:[{n:"mobId",t:"MobId"}]},
+"onMobKilledOtherMob":{d:"Called when a mob kills another mob",r:"void",p:[{n:"attackingMob",t:"MobId"},{n:"killedMob",t:"MobId"},{n:"damageDealt",t:"number"},{n:"withItem",t:"string"}]},
+"onMobKilledPlayer":{d:"Called when a mob kills a player",r:"void",p:[{n:"attackingMob",t:"any"},{n:"killedPlayer",t:"any"},{n:"damageDealt",t:"any"},{n:"withItem",t:"any"}]},
+"onMobSettingUpdated":{d:"Called when a mob setting is updated",r:"void",p:[{n:"mobId",t:"MobId"},{n:"setting",t:"MobSetting"},{n:"value",t:"any"}]},
+"onPlayerAltAction":{d:"Called when player completes an alt action (right click on pc).",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"block",t:"BlockName"},{n:"targetEId",t:"EntityId | null"}]},
+"onPlayerAttack":{d:"Called when a player attacks another player",r:"void",p:[{n:"playerId",t:"string"}]},
+"onPlayerAttemptAltAction":{d:"Called when player alt actions (right click on pc).",r:"void | \"preventAction\"",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"block",t:"BlockName"},{n:"targetEId",t:"EntityId | null"}]},
+"onPlayerAttemptCraft":{d:"Called when a player attempts to craft an item",r:"void | \"preventCraft\"",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"string"},{n:"craftingIdx",t:"number"},{n:"craftTimes",t:"number"}]},
+"onPlayerAttemptOpenChest":{d:"Called when a player attempts to open a chest",r:"void | \"preventAction\"",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"isMoonstoneChest",t:"boolean"},{n:"isIronChest",t:"boolean"}]},
+"onPlayerAttemptSpawnMob":{d:"Called when a player attempts to spawn a mob, e.g. using a spawn orb.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"mobType",t:"MobType"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"onPlayerBoughtShopItem":{d:"Called after a player successfully buys a shop item",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"categoryKey",t:"ShopCategoryKey"},{n:"itemKey",t:"ShopItemKey"},{n:"item",t:"BoughtShopItem"},{n:"userInput",t:"string"}]},
+"onPlayerBreakMeshEntity":{d:"Called when a player breaks a mesh entity",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"entityId",t:"EntityId"}]},
+"onPlayerChangeBlock":{d:"Called when a player changes a block",r:"void | \"preventChange\"",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"fromBlock",t:"BlockName"},{n:"toBlock",t:"BlockName"},{n:"droppedItem",t:"BlockName | null"},{n:"fromBlockInfo",t:"MultiBlockInfo"},{n:"toBlockInfo",t:"MultiBlockInfo"}]},
+"onPlayerChat":{d:"Called when a player sends a chat message",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"chatMessage",t:"string"},{n:"channelName",t:"string"}]},
+"onPlayerClick":{d:"Called when a player clicks",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"wasAltClick",t:"boolean"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"block",t:"BlockName"},{n:"targetEId",t:"EntityId | null"}]},
+"onPlayerClickUp":{d:"Called when a player releases a click (mouse-up on desktop, touch-end on mobile).",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"wasAltClick",t:"boolean"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"block",t:"BlockName"},{n:"targetEId",t:"EntityId | null"}]},
+"onPlayerCraft":{d:"Called when a player crafts an item",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"string"},{n:"craftingIdx",t:"number"},{n:"recipe",t:"RecipesForItem[number]"},{n:"craftTimes",t:"number"}]},
+"onPlayerDamagingMeshEntity":{d:"Called when a player is damaging a mesh entity",r:"number | \"preventDamage\"",p:[{n:"playerId",t:"PlayerId"},{n:"damagedId",t:"EntityId"},{n:"damageDealt",t:"number"},{n:"withItem",t:"string"}]},
+"onPlayerDamagingMob":{d:"Called when a player is damaging a mob",r:"number | \"preventDamage\"",p:[{n:"playerId",t:"PlayerId"},{n:"mobId",t:"MobId"},{n:"damageDealt",t:"number"},{n:"withItem",t:"string"},{n:"damagerDbId",t:"PlayerDbId"}]},
+"onPlayerDamagingOtherPlayer":{d:"Called when a player is damaging another player",r:"number | \"preventDamage\"",p:[{n:"attackingPlayer",t:"PlayerId"},{n:"damagedPlayer",t:"PlayerId"},{n:"damageDealt",t:"number"},{n:"withItem",t:"string"},{n:"bodyPartHit",t:"LifeformBodyPart"},{n:"damagerDbId",t:"PlayerDbId"}]},
+"onPlayerDropItem":{d:"Called when a player drops an item",r:"void | \"preventDrop\"",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"itemName",t:"ItemName"},{n:"itemAmount",t:"number"},{n:"fromIdx",t:"number"}]},
+"onPlayerEnteredVehicle":{d:"Called when a player enters a vehicle",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"vehicleType",t:"MeshEntityVehicleType"},{n:"vehicleEId",t:"EntityId"}]},
+"onPlayerExitedVehicle":{d:"Called when a player exits a vehicle",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"vehicleType",t:"MeshEntityVehicleType"},{n:"vehicleEId",t:"EntityId"}]},
+"onPlayerFinishChargingItem":{d:"Called when a player finishes charging an item",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"used",t:"boolean"},{n:"itemName",t:"string"},{n:"duration",t:"number"}]},
+"onPlayerFinishQTE":{d:"",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"qteId",t:"QTERequestId"},{n:"result",t:"boolean"}]},
+"onPlayerJoin":{d:"Called when a player joins the lobby",r:"void",p:[{n:"playerId",t:"string"},{n:"fromGameReset",t:"boolean"}]},
+"onPlayerJump":{d:"Called when a player jumps",r:"void",p:[{n:"playerId",t:"string"}]},
+"onPlayerKilledMob":{d:"Called when a player kills a mob",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"mobId",t:"MobId"},{n:"damageDealt",t:"number"},{n:"withItem",t:"string"}]},
+"onPlayerKilledOtherPlayer":{d:"Called when a player kills another player",r:"void",p:[{n:"attackingPlayer",t:"string"},{n:"killedPlayer",t:"string"},{n:"damageDealt",t:"number"},{n:"withItem",t:"string"}]},
+"onPlayerLeave":{d:"Called when a player leaves the lobby",r:"void",p:[{n:"playerId",t:"string"},{n:"serverIsShuttingDown",t:"boolean"}]},
+"onPlayerMoveInvenItem":{d:"Called for all types of inventory item movement.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"fromIdx",t:"number"},{n:"toStartIdx",t:"number"},{n:"toEndIdx",t:"number"},{n:"amt",t:"number"}]},
+"onPlayerMoveInvenItemWithAmt":{d:"`void \\| \"preventChange\"`",r:"void | \"preventChange\"",p:[{n:"playerId",t:"PlayerId"},{n:"i",t:"number"},{n:"j",t:"number"},{n:"amt",t:"number"}]},
+"onPlayerMoveItemIntoIdxs":{d:"Called when a player moves an item into an index within a range of inventory slots",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"start",t:"number"},{n:"end",t:"number"},{n:"moveIdx",t:"number"},{n:"itemAmount",t:"number"}]},
+"onPlayerMoveItemOutOfInventory":{d:"Called when a player moves an item out of their inventory",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"string"},{n:"itemAmount",t:"number"},{n:"fromIdx",t:"number"},{n:"movementType",t:"string"}]},
+"onPlayerOpenedChest":{d:"Called when a player opens a chest",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"isMoonstoneChest",t:"boolean"},{n:"isIronChest",t:"boolean"}]},
+"onPlayerPickedUpItem":{d:"Called when a player picks up an item",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"string"},{n:"itemAmount",t:"number"},{n:"itemEntityId",t:"EntityId"}]},
+"onPlayerPlayedEmote":{d:"/** Called after a player plays an emote from the emote wheel. */",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"emoteId",t:"string"}]},
+"onPlayerPotionEffect":{d:"Called when a player is affected by a new potion effect",r:"void",p:[{n:"initiatorId",t:"string"},{n:"targetId",t:"string"},{n:"effectName",t:"\"Damage\" | \"Speed\" | \"Damage Reduction\" | \"Invisible\" | \"Jump Boost\" | \"Knockback\" | \"Poisoned\" | \"Slowness\" | \"Weakness\" | \"Cleansed\" | \"Instant Damage\" | \"Health Regen\" | \"Instant Health\" | \"Haste\" | \"Shield\" | \"Double Jump\" | \"Heat Resistance\" | \"Thief\" | \"X-Ray Vision\" | \"Mining Yield\" | \"Brain Rot\" | \"Aura\" | \"Wall Climbing\" | \"Air Walk\" | \"Pickpocketer\" | \"Lifesteal\" | \"Bounciness\" | \"Blindness\" | \"Poopy\""}]},
+"onPlayerRequestChunk":{d:"Called when a player requests a chunk",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"chunkX",t:"number"},{n:"chunkY",t:"number"},{n:"chunkZ",t:"number"},{n:"chunkId",t:"string"}]},
+"onPlayerSelectInventorySlot":{d:"Called when a player selects a different inventory slot.",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"slotIndex",t:"number"}]},
+"onPlayerSpawnMob":{d:"Called when a mob is spawned by a player",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"mobId",t:"MobId"},{n:"mobType",t:"MobType"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"mobHerdId",t:"MobHerdId"},{n:"playSoundOnSpawn",t:"boolean"}]},
+"onPlayerStartChargingItem":{d:"Called when a player starts charging an item",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"itemName",t:"string"}]},
+"onPlayerSwapInvenSlots":{d:"`void \\| \"preventChange\"`",r:"void | \"preventChange\"",p:[{n:"playerId",t:"PlayerId"},{n:"i",t:"number"},{n:"j",t:"number"}]},
+"onPlayerThrowableHitTerrain":{d:"Called when a player's thrown projectile hits the terrain",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"throwableName",t:"ThrowableItem"},{n:"thrownEntityId",t:"EntityId"}]},
+"onPlayerToggledShopMenu":{d:"Called when a player opens or closes the shop menu",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"isOpen",t:"boolean"}]},
+"onPlayerUsedThrowable":{d:"Called when a player uses a throwable item",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"throwableName",t:"ThrowableItem"},{n:"thrownEntityId",t:"EntityId"}]},
+"onRespawnRequest":{d:"Called when a player requests to respawn.",r:"void",p:[{n:"playerId",t:"string"}]},
+"onTaskClaimed":{d:"Called when a player claims a task",r:"void",p:[{n:"playerId",t:"string"},{n:"taskId",t:"any"},{n:"isPromoTask",t:"any"},{n:"claimedRewards",t:"any"}]},
+"onTouchscreenActionButton":{d:"Set client option `touchscreenActionButton` to take effect",r:"void",p:[{n:"playerId",t:"PlayerId"},{n:"touchDown",t:"boolean"}]},
+"onWorldAttemptDespawnMob":{d:"Called when a mob is despawned by the world.",r:"void",p:[{n:"mobId",t:"MobId"}]},
+"onWorldAttemptSpawnMob":{d:"Called when the world attempts to spawn a mob.",r:"void",p:[{n:"mobType",t:"MobType"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"}]},
+"onWorldChangeBlock":{d:"Called when a block is changed in the world",r:"void | \"preventChange\"",p:[{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"fromBlock",t:"BlockName"},{n:"toBlock",t:"BlockName"},{n:"initiatorDbId",t:"string | null"},{n:"extraInfo",t:"WorldBlockChangedInfo"}]},
+"onWorldSpawnMob":{d:"Called when a mob is spawned by the world",r:"void",p:[{n:"mobId",t:"MobId"},{n:"mobType",t:"MobType"},{n:"x",t:"number"},{n:"y",t:"number"},{n:"z",t:"number"},{n:"mobHerdId",t:"MobHerdId"},{n:"playSoundOnSpawn",t:"boolean"}]},
+"playerCommand":{d:"Called when a player sends a command",r:"void",p:[{n:"playerId",t:"string"},{n:"command",t:"string"}]},
+"tick":{d:"Called every tick, 20 times per second",r:"void",p:[{n:"ms",t:"number"}]}
+};
+    const CB_SIGS = {
+      "doPeriodicSave": "",
+      "onAttemptKillPlayer": "killedPlayer, attackingLifeform",
+      "onBlockStand": "playerId, x, y, z, blockName",
+      "onBlockStandStart": "playerId, x, y, z, blockName",
+      "onBlockStandStop": "playerId, x, y, z, blockName",
+      "onChestUpdated": "initiatorEId, isMoonstoneChest, x, y, z",
+      "onChunkLoaded": "chunkId, chunk, wasPersistedChunk",
+      "onClientOptionUpdated": "playerId, option, value",
+      "onClose": "serverIsShuttingDown",
+      "onCreateBloxdMeshEntity": "eId, type, initiatorId",
+      "onEntityCollision": "eId, otherEId",
+      "onInventoryUpdated": "playerId",
+      "onItemDropCreated": "itemEId, itemName, itemAmount, x, y, z",
+      "onMobDamagingOtherMob": "attackingMob, damagedMob, damageDealt, withItem",
+      "onMobDamagingPlayer": "attackingMob, damagedPlayer, damageDealt, withItem",
+      "onMobDespawned": "mobId",
+      "onMobKilledOtherMob": "attackingMob, killedMob, damageDealt, withItem",
+      "onMobKilledPlayer": "attackingMob, killedPlayer, damageDealt, withItem",
+      "onMobSettingUpdated": "mobId, setting, value",
+      "onPlayerAltAction": "playerId, x, y, z, block, targetEId",
+      "onPlayerAttack": "playerId",
+      "onPlayerAttemptAltAction": "playerId, x, y, z, block, targetEId",
+      "onPlayerAttemptCraft": "playerId, itemName, craftingIdx, craftTimes",
+      "onPlayerAttemptOpenChest": "playerId, x, y, z, isMoonstoneChest, isIronChest",
+      "onPlayerAttemptSpawnMob": "playerId, mobType, x, y, z",
+      "onPlayerBoughtShopItem": "playerId, categoryKey, itemKey, item, userInput",
+      "onPlayerBreakMeshEntity": "playerId, entityId",
+      "onPlayerChangeBlock": "playerId, x, y, z, fromBlock, toBlock, droppedItem, fromBlockInfo, toBlockInfo",
+      "onPlayerChat": "playerId, chatMessage, channelName",
+      "onPlayerClick": "playerId, wasAltClick, x, y, z, block, targetEId",
+      "onPlayerClickUp": "playerId, wasAltClick, x, y, z, block, targetEId",
+      "onPlayerCraft": "playerId, itemName, craftingIdx, recipe, craftTimes",
+      "onPlayerDamagingMeshEntity": "playerId, damagedId, damageDealt, withItem",
+      "onPlayerDamagingMob": "playerId, mobId, damageDealt, withItem, damagerDbId",
+      "onPlayerDamagingOtherPlayer": "attackingPlayer, damagedPlayer, damageDealt, withItem, bodyPartHit, damagerDbId",
+      "onPlayerDropItem": "playerId, x, y, z, itemName, itemAmount, fromIdx",
+      "onPlayerEnteredVehicle": "playerId, vehicleType, vehicleEId",
+      "onPlayerExitedVehicle": "playerId, vehicleType, vehicleEId",
+      "onPlayerFinishChargingItem": "playerId, used, itemName, duration",
+      "onPlayerFinishQTE": "playerId, qteId, result",
+      "onPlayerJoin": "playerId, fromGameReset",
+      "onPlayerJump": "playerId",
+      "onPlayerKilledMob": "playerId, mobId, damageDealt, withItem",
+      "onPlayerKilledOtherPlayer": "attackingPlayer, killedPlayer, damageDealt, withItem",
+      "onPlayerLeave": "playerId, serverIsShuttingDown",
+      "onPlayerMoveInvenItem": "playerId, fromIdx, toStartIdx, toEndIdx, amt",
+      "onPlayerMoveInvenItemWithAmt": "playerId, i, j, amt",
+      "onPlayerMoveItemIntoIdxs": "playerId, start, end, moveIdx, itemAmount",
+      "onPlayerMoveItemOutOfInventory": "playerId, itemName, itemAmount, fromIdx, movementType",
+      "onPlayerOpenedChest": "playerId, x, y, z, isMoonstoneChest, isIronChest",
+      "onPlayerPickedUpItem": "playerId, itemName, itemAmount, itemEntityId",
+      "onPlayerPlayedEmote": "playerId, emoteId",
+      "onPlayerPotionEffect": "initiatorId, targetId, effectName",
+      "onPlayerRequestChunk": "playerId, chunkX, chunkY, chunkZ, chunkId",
+      "onPlayerSelectInventorySlot": "playerId, slotIndex",
+      "onPlayerSpawnMob": "playerId, mobId, mobType, x, y, z, mobHerdId, playSoundOnSpawn",
+      "onPlayerStartChargingItem": "playerId, itemName",
+      "onPlayerSwapInvenSlots": "playerId, i, j",
+      "onPlayerThrowableHitTerrain": "playerId, throwableName, thrownEntityId",
+      "onPlayerToggledShopMenu": "playerId, isOpen",
+      "onPlayerUsedThrowable": "playerId, throwableName, thrownEntityId",
+      "onRespawnRequest": "playerId",
+      "onTaskClaimed": "playerId, taskId, isPromoTask, claimedRewards",
+      "onTouchscreenActionButton": "playerId, touchDown",
+      "onWorldAttemptDespawnMob": "mobId",
+      "onWorldAttemptSpawnMob": "mobType, x, y, z",
+      "onWorldChangeBlock": "x, y, z, fromBlock, toBlock, initiatorDbId, extraInfo",
+      "onWorldSpawnMob": "mobId, mobType, x, y, z, mobHerdId, playSoundOnSpawn",
+      "playerCommand": "playerId, command",
+      "tick": "ms"
+    };
+    const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "onBlockStandStart", "onBlockStandStop", "onChestUpdated", "onChunkLoaded", "onClientOptionUpdated", "onClose", "onCreateBloxdMeshEntity", "onEntityCollision", "onInventoryUpdated", "onItemDropCreated", "onMobDamagingOtherMob", "onMobDamagingPlayer", "onMobDespawned", "onMobKilledOtherMob", "onMobKilledPlayer", "onMobSettingUpdated", "onPlayerAltAction", "onPlayerAttack", "onPlayerAttemptAltAction", "onPlayerAttemptCraft", "onPlayerAttemptOpenChest", "onPlayerAttemptSpawnMob", "onPlayerBoughtShopItem", "onPlayerBreakMeshEntity", "onPlayerChangeBlock", "onPlayerChat", "onPlayerClick", "onPlayerClickUp", "onPlayerCraft", "onPlayerDamagingMeshEntity", "onPlayerDamagingMob", "onPlayerDamagingOtherPlayer", "onPlayerDropItem", "onPlayerEnteredVehicle", "onPlayerExitedVehicle", "onPlayerFinishChargingItem", "onPlayerFinishQTE", "onPlayerJoin", "onPlayerJump", "onPlayerKilledMob", "onPlayerKilledOtherPlayer", "onPlayerLeave", "onPlayerMoveInvenItem", "onPlayerMoveInvenItemWithAmt", "onPlayerMoveItemIntoIdxs", "onPlayerMoveItemOutOfInventory", "onPlayerOpenedChest", "onPlayerPickedUpItem", "onPlayerPlayedEmote", "onPlayerPotionEffect", "onPlayerRequestChunk", "onPlayerSelectInventorySlot", "onPlayerSpawnMob", "onPlayerStartChargingItem", "onPlayerSwapInvenSlots", "onPlayerThrowableHitTerrain", "onPlayerToggledShopMenu", "onPlayerUsedThrowable", "onRespawnRequest", "onTaskClaimed", "onTouchscreenActionButton", "onWorldAttemptDespawnMob", "onWorldAttemptSpawnMob", "onWorldChangeBlock", "onWorldSpawnMob", "playerCommand", "tick"];
 
     let SUG = [];
     let tipOn = true, idx = 0, list = [];
@@ -181,29 +573,45 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       t._t = setTimeout(() => t.classList.remove("show"), 2200);
     }
 
+        function cbIns(name) {
+      const params = (typeof CB_SIGS !== "undefined" && CB_SIGS[name] != null) ? CB_SIGS[name] : "";
+      return name + " = (" + params + ") => {\n  \n};";
+    }
     function buildSug(cbs, apis) {
       const out = [];
-      cbs.forEach(c => out.push({ name: c, k: "cb", ins: c + " = (...args) => {\n  \n};" }));
+      cbs.forEach(c => {
+        if (!/^(on|tick|player|do)[A-Za-z0-9]*$/.test(c)) return;
+        out.push({ name: c, k: "cb", ins: cbIns(c) });
+      });
       apis.forEach(a => {
         const method = String(a).replace(/^api\./, "");
-        out.push({ name: "api." + method, k: "api", ins: "api." + method + "()" });
+        if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(method)) return;
+        out.push({ name: "api." + method, k: "api", ins: "api." + method, method: method });
       });
       ["preventDeath","preventChange","preventAction","preventDamage","preventDrop","preventCraft","keepInventory"].forEach(k => {
         out.push({ name: k, k: "kw", ins: '"' + k + '"' });
       });
       return out;
     }
-
     function renderDocsLists(cbs, apis) {
       const box = document.getElementById("docsLists");
-      let html = "<h4>コールバック全部 · " + cbs.length + "件</h4>";
+      let html = "<h4>コールバック · " + cbs.length + "件</h4>";
       cbs.forEach(c => {
-        html += '<div class="sig" data-ins="' + c + ' = (...args) => {&#10;  &#10;};">' + c + '</div>';
+        if (!/^(on|tick|player|do)[A-Za-z0-9]*$/.test(c)) return;
+        const ins = cbIns(c).replace(/\n/g, "&#10;");
+        const params = (CB_SIGS && CB_SIGS[c]) || "";
+        html += '<div class="sig" data-ins="' + ins + '">' + c + "(" + params + ")</div>";
       });
-      html += "<h4>API全部 · " + apis.length + "件</h4>";
+      html += "<h4>API · " + apis.length + "件（表示=印数 / 挿入は()のみ）</h4>";
       apis.forEach(a => {
         const method = String(a).replace(/^api\./, "");
-        html += '<div class="sig" data-ins="api.' + method + '()">api.' + method + '()</div>';
+        if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(method)) return;
+        const d = (typeof API_DETAIL !== "undefined" && API_DETAIL[method]) ? API_DETAIL[method] : null;
+        let shown = "api." + method + "()";
+        if (d && d.p && d.p.length) {
+          shown = "api." + method + "(" + d.p.map(function(x){ return x.n; }).join(", ") + ")";
+        }
+        html += '<div class="sig" data-ins="api.' + method + '" data-method="' + method + '">' + shown + '</div>';
       });
       box.innerHTML = html;
       box.querySelectorAll(".sig").forEach(function(el) {
@@ -214,11 +622,12 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
           ed.selectionStart = ed.selectionEnd = pos + ins.length;
           updateNums();
           ed.focus();
+          var m = el.getAttribute("data-method");
+          if (m) showApiTip(m);
           toast("挿入しました");
         };
       });
     }
-
     function applyLists(cbs, apis, label) {
       SUG = buildSug(cbs, apis);
       renderDocsLists(cbs, apis);
@@ -230,14 +639,8 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       const names = new Set();
       md.split("\n").forEach(line => {
         const m = line.match(/^## ([a-zA-Z][a-zA-Z0-9]*)\s*$/);
-        if (m) names.add(m[1]);
+        if (m && (/^(on|tick|player|do)/.test(m[1]))) names.add(m[1]);
       });
-      const block = md.match(/```text\n([\s\S]*?)```/);
-      if (block) {
-        block[1].split(/\s+/).forEach(w => {
-          if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(w)) names.add(w);
-        });
-      }
       names.delete("Callbacks");
       return Array.from(names).sort();
     }
@@ -297,15 +700,20 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       const l = w.toLowerCase();
       // API候補は「api.」と打ち始めてからだけ表示
       if (l.startsWith("api.")) {
-        const q = l.slice(4); // api. の後ろ
-        list = SUG.filter(s => s.k === "api" && s.name.toLowerCase().includes("api." + q)).slice(0, 40);
+        const q = l.slice(4);
+        list = SUG.filter(s => s.k === "api" && s.name.toLowerCase().startsWith("api." + q)).slice(0, 40);
       } else if (l === "api") {
-        // 「api」だけ打った時点では候補を出さない（ドット待ち）
         hideAc();
         return;
       } else {
-        // コールバック・キーワードのみ（api 以外）
-        list = SUG.filter(s => (s.k === "cb" || s.k === "kw") && s.name.toLowerCase().includes(l)).slice(0, 40);
+        // コールバック・キーワードのみ。先頭一致（includes だと a で大量ヒットするため）
+        // 1文字だけならコールバックは出さない（誤爆防止）
+        if (l.length < 2) { hideAc(); return; }
+        list = SUG.filter(s => {
+          if (s.k !== "cb" && s.k !== "kw") return false;
+          const n = s.name.toLowerCase();
+          return n.startsWith(l);
+        }).slice(0, 40);
       }
       if (!list.length) { hideAc(); return; }
       idx = 0;
@@ -316,7 +724,7 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       ac.innerHTML = list.map((s, i) =>
         '<div class="ac-item ' + (i === idx ? "on" : "") + '" data-i="' + i + '">' +
           '<span class="n">' + s.name + '</span>' +
-          '<span class="k ' + s.k + '">' + (s.k === "api" ? "API" : s.k === "cb" ? "CB" : "") + '</span>' +
+          '<span class="k ' + s.k + '">' + (s.k === "api" ? "API" : s.k === "cb" ? "CB" : "KW") + '</span>' +
         '</div>'
       ).join("");
       let touchY0 = 0, scrolled = false;
@@ -339,6 +747,71 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       const on = ac.children[idx];
       if (on) on.scrollIntoView({ block: "nearest" });
     }
+    
+    
+    function hideApiTip() {
+      const tip = document.getElementById("apiTip");
+      if (tip) tip.classList.remove("show");
+    }
+    function renderSigTip(name, kind) {
+      const tip = document.getElementById("apiTip");
+      if (!tip) return;
+      let info = null;
+      let title = name;
+      if (kind === "api") {
+        info = (typeof API_DETAIL !== "undefined") ? API_DETAIL[name] : null;
+        title = "api." + name;
+      } else {
+        info = (typeof CB_DETAIL !== "undefined") ? CB_DETAIL[name] : null;
+      }
+      if (!info) { tip.classList.remove("show"); return; }
+      let h = '<div class="fn"><span style="color:#89b4fa">' + title + "</span>(";
+      if (info.p && info.p.length) {
+        h += "<br>" + info.p.map(function(x) {
+          return '&nbsp;&nbsp;<span class="pn">' + x.n + '</span>: <span class="pt">' + x.t + "</span>";
+        }).join("<br>") + "<br>";
+      }
+      h += '): <span class="ret">' + (info.r || "void") + "</span></div>";
+      if (info.d) h += '<div class="desc">' + info.d + "</div>";
+      tip.innerHTML = h;
+      tip.classList.add("show");
+      // 候補が出ているときは少し上へ
+      const acEl = document.getElementById("ac");
+      if (acEl && acEl.classList.contains("show")) {
+        tip.style.bottom = (12 + Math.min(acEl.offsetHeight || 0, 180) + 10) + "px";
+      } else {
+        tip.style.bottom = "56px";
+      }
+    }
+    /** カーソル位置から api.xxx( または callback = ( を検出してツールチップ表示 */
+    function updateContextTip() {
+      if (!tipOn) { hideApiTip(); return; }
+      const pos = ed.selectionStart;
+      const before = ed.value.slice(0, pos);
+      // カーソルより前で、まだ閉じていない直近の ( を基準に関数名を取る
+      // 例: api.applyEffect(  /  onPlayerJoin = (  /  onPlayerJoin=(
+      const tail = before.slice(-400);
+      // API: api.name(
+      let m = tail.match(/api\.([a-zA-Z][a-zA-Z0-9]*)\s*\([^)]*$/);
+      if (m && typeof API_DETAIL !== "undefined" && API_DETAIL[m[1]]) {
+        renderSigTip(m[1], "api");
+        return;
+      }
+      // Callback 統一: name = (  または name(
+      m = tail.match(/\b((?:on|tick|player|do)[a-zA-Z0-9]*)\s*=\s*\([^)]*$/);
+      if (m && typeof CB_DETAIL !== "undefined" && CB_DETAIL[m[1]]) {
+        renderSigTip(m[1], "cb");
+        return;
+      }
+      m = tail.match(/\b((?:on|tick|player|do)[a-zA-Z0-9]*)\s*\([^)]*$/);
+      if (m && typeof CB_DETAIL !== "undefined" && CB_DETAIL[m[1]]) {
+        renderSigTip(m[1], "cb");
+        return;
+      }
+      // 候補リスト表示中は drawAc 側に任せる
+      if (ac.classList.contains("show") && list[idx]) return;
+      hideApiTip();
+    }
     function hideAc() { ac.classList.remove("show"); list = []; }
     function pick(s) {
       const pos = ed.selectionStart;
@@ -348,13 +821,21 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       const nb = before.slice(0, before.length - w.length) + s.ins;
       ed.value = nb + after;
       ed.selectionStart = ed.selectionEnd = nb.length;
-      hideAc(); updateNums(); updatePos(); ed.focus();
+      hideAc();
+      updateNums();
+      updatePos();
+      ed.focus();
+      // 選択したあとに印数を表示（API / Callback 共通）
+      if (s.k === "api" && s.method) renderSigTip(s.method, "api");
+      else if (s.k === "cb") renderSigTip(s.name, "cb");
+      else hideApiTip();
     }
 
-    ed.addEventListener("input", function() { updateNums(); updatePos(); showAc(); });
+    ed.addEventListener("input", function() { updateNums(); updatePos(); showAc(); updateContextTip(); });
     ed.addEventListener("scroll", function() { nums.scrollTop = ed.scrollTop; });
-    ed.addEventListener("click", updatePos);
+    ed.addEventListener("click", function() { updatePos(); updateContextTip(); });
     ed.addEventListener("keyup", function(e) {
+      updateContextTip();
       if (["ArrowUp","ArrowDown","Enter","Tab","Escape"].indexOf(e.key) === -1) { updatePos(); showAc(); }
     });
     ed.addEventListener("keydown", function(e) {
@@ -418,7 +899,12 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
     }
     function clearEditor() {
       if (ed.value && !confirm("エディタを空にしますか？")) return;
-      ed.value = ""; updateNums(); updatePos(); hideAc(); toast("クリアしました");
+      ed.value = "";
+      updateNums();
+      updatePos();
+      hideAc();
+      ed.focus();
+      toast("クリアしました");
     }
 
     applyLists(BUILTIN_CB, BUILTIN_API, "内蔵一覧");
