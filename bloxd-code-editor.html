@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>bloxd.io Code Helper</title>
+  <style>
+    :root {
+      --bg: #1a1a24; --editor: #12121a; --panel: #22222e; --border: #333344;
+      --text: #d4d4e0; --muted: #7a7a90; --blue: #7aa2f7; --green: #9ece6a;
+      --yellow: #e0af68; --cyan: #7dcfff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", sans-serif;
+      background: var(--bg); color: var(--text); height: 100vh; height: 100dvh;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .bar {
+      display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px;
+      background: var(--panel); border-bottom: 1px solid var(--border); align-items: center;
+    }
+    .bar button {
+      border: none; border-radius: 6px; padding: 8px 12px;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; color: #fff;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bar button:active { opacity: 0.85; }
+    .btn-copy { background: #179299; }
+    .btn-share { background: #04a5e5; }
+    .btn-docs { background: #8839ef; }
+    .btn-clear { background: #4c4f69; }
+    .btn-tip { background: #3d3d50; }
+    .btn-refresh { background: #1e66f5; }
+    .title { margin-right: auto; font-size: 0.8rem; color: var(--muted); padding-left: 4px; }
+    .main { flex: 1; display: flex; min-height: 0; position: relative; }
+    .editor-side { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+    .lines { display: flex; flex: 1; overflow: hidden; background: var(--editor); }
+    .nums {
+      width: 40px; padding: 12px 0; text-align: right;
+      font: 13px/1.55 ui-monospace, "Cascadia Code", Consolas, monospace;
+      color: #555568; background: #0e0e14; border-right: 1px solid #2a2a36;
+      overflow: hidden; user-select: none; flex-shrink: 0;
+    }
+    .nums div { padding-right: 8px; height: 20.15px; }
+    textarea {
+      flex: 1; border: none; outline: none; resize: none; background: transparent;
+      color: var(--text); font: 13px/1.55 ui-monospace, "Cascadia Code", Consolas, monospace;
+      padding: 12px; white-space: pre; overflow: auto; caret-color: #f5e0dc; tab-size: 2;
+    }
+    .ac {
+      position: absolute; z-index: 50; background: #1e1e2c; border: 1px solid var(--border);
+      border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.45); max-height: 240px;
+      overflow-y: auto; display: none; min-width: 280px; max-width: 90vw; bottom: 12px; left: 44px;
+    }
+    .ac.show { display: block; }
+    .ac-item {
+      padding: 8px 12px; font: 12px/1.4 ui-monospace, Consolas, monospace;
+      cursor: pointer; display: flex; justify-content: space-between; gap: 10px;
+    }
+    .ac-item:hover, .ac-item.on { background: #2a2a3e; }
+    .ac-item .n { color: var(--blue); word-break: break-all; }
+    .ac-item .k { font-size: 0.65rem; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+    .ac-item .k.api { color: var(--yellow); }
+    .ac-item .k.cb { color: var(--green); }
+    .docs {
+      width: min(320px, 100%); background: #16161e; border-left: 1px solid var(--border);
+      display: none; flex-direction: column; flex-shrink: 0; overflow: hidden;
+    }
+    .docs.show { display: flex; }
+    .docs-h {
+      padding: 10px 12px; border-bottom: 1px solid var(--border); font-weight: 600;
+      font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .docs-b { flex: 1; overflow-y: auto; padding: 10px 12px; font-size: 0.8rem; -webkit-overflow-scrolling: touch; }
+    .docs-b a {
+      display: block; color: var(--cyan); text-decoration: none; padding: 6px 0;
+      border-bottom: 1px solid #252530;
+    }
+    .docs-b a:hover { color: var(--green); }
+    .docs-b h4 {
+      color: var(--yellow); margin: 14px 0 6px; font-size: 0.8rem;
+      position: sticky; top: 0; background: #16161e; padding: 4px 0;
+    }
+    .docs-b h4:first-child { margin-top: 0; }
+    .sig {
+      background: #1a1a24; border: 1px solid var(--border); border-radius: 4px;
+      padding: 7px 8px; font: 11px/1.35 ui-monospace, Consolas, monospace; color: var(--green);
+      margin: 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+    }
+    .sig:hover, .sig:active { border-color: var(--blue); background: #222230; }
+    .status {
+      padding: 4px 12px; background: #111118; border-top: 1px solid var(--border);
+      font-size: 0.72rem; color: var(--muted); display: flex; justify-content: space-between;
+    }
+    .toast {
+      position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(12px);
+      background: #2e2e3e; color: #fff; padding: 10px 18px; border-radius: 8px;
+      font-size: 0.85rem; opacity: 0; transition: 0.2s; z-index: 100; pointer-events: none;
+      max-width: 90vw; text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .loading { color: var(--green); font-size: 0.75rem; padding: 0 4px; }
+    @media (max-width: 640px) {
+      .docs { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; z-index: 40; }
+      .title { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <span class="title">bloxd.io · 補助エディタ</span>
+    <span class="loading" id="loadStatus">内蔵一覧</span>
+    <button class="btn-copy" type="button" onclick="copyCode()">Copy</button>
+    <button class="btn-share" type="button" onclick="shareCode()">共有</button>
+    <button class="btn-docs" type="button" onclick="toggleDocs()">Docs</button>
+    <button class="btn-refresh" type="button" onclick="refreshDocs()">更新</button>
+    <button class="btn-tip" type="button" id="tipBtn" onclick="toggleTip()">Hide Tips</button>
+    <button class="btn-clear" type="button" onclick="clearEditor()">Clear</button>
+  </div>
+  <div class="main">
+    <div class="editor-side">
+      <div class="lines">
+        <div class="nums" id="nums"></div>
+        <textarea id="ed" spellcheck="false" placeholder="// コードを入力… api. や onPlayer で候補&#10;// Copy / 共有 でスマホでも取り出せます"></textarea>
+      </div>
+      <div class="ac" id="ac"></div>
+    </div>
+    <div class="docs" id="docs">
+      <div class="docs-h">
+        <span>Game API / Docs</span>
+        <button type="button" style="background:#e64553;border:none;color:#fff;width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:16px" onclick="toggleDocs()">×</button>
+      </div>
+      <div class="docs-b" id="docsBody">
+        <h4>公式リンク</h4>
+        <a href="https://github.com/Bloxdy/code-api" target="_blank" rel="noopener">リポジトリトップ</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/API_REFERENCE.md?plain=1" target="_blank" rel="noopener">API関数一覧</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/CALLBACKS.md?plain=1" target="_blank" rel="noopener">コールバック一覧</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/README.md?plain=1" target="_blank" rel="noopener">基本ドキュメント</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/MESH_ENTITY_DOCS.md?plain=1" target="_blank" rel="noopener">メッシュ・エンティティ</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/BLOCK_NAMES.txt" target="_blank" rel="noopener">ブロック名リスト</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/ITEM_NAMES.txt" target="_blank" rel="noopener">アイテム名リスト</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/CLIENT_OPTIONS.md?plain=1" target="_blank" rel="noopener">クライアント設定</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/ENTITY_SETTINGS.md?plain=1" target="_blank" rel="noopener">エンティティ設定</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/MOB_SETTINGS.md?plain=1" target="_blank" rel="noopener">Mob設定</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/PARTICLES.md?plain=1" target="_blank" rel="noopener">パーティクル</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/SOUNDS_AND_MUSIC.md?plain=1" target="_blank" rel="noopener">サウンド・BGM</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/SKINS_AND_POSES.md?plain=1" target="_blank" rel="noopener">スキン・ポーズ</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/ICONS.md?plain=1" target="_blank" rel="noopener">アイコン一覧</a>
+        <a href="https://github.com/Bloxdy/code-api/blob/main/QTE_DOCS.md?plain=1" target="_blank" rel="noopener">QTE設定</a>
+        <div id="docsLists"></div>
+      </div>
+    </div>
+  </div>
+  <div class="status">
+    <span>Ln <span id="ln">1</span>, Col <span id="col">1</span></span>
+    <span id="st">Ready</span>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script>
+const BUILTIN_API = ["addCustomKillfeedMessage", "addFollowingEntityToPlayer", "addQTE", "animateEntity", "applyAuraChange", "applyEffect", "applyHealthChange", "applyImpulse", "applyMeleeHit", "attemptApplyDamage", "attemptCreateAudioEntity", "attemptCreateMeshEntity", "attemptCreateThrowable", "attemptSpawnMob", "attemptWorldChangeBlock", "blockCoordToChunkId", "blockIdToBlockName", "blockNameToBlockId", "broadcastMessage", "broadcastSound", "calcExplosionForce", "canOpenStandardChest", "changePlayerIntoSkin", "checkValid", "chunkIdToBotLeftCoord", "clearDirectionArrow", "clearInventory", "clearKillstreak", "closeChestForPlayer", "configureShopCategory", "configureShopCategoryForPlayer", "copyChunk", "createEnchantmentAttributesForItem", "createItemDrop", "createMobHerd", "createShopItem", "createShopItemForPlayer", "deleteAllItems", "deleteAllLobbyDbValues", "deleteAllPlayerDbValues", "deleteAudioEntity", "deleteItemDrop", "deleteLobbyDbValue", "deleteMeshEntity", "deletePlayerDbValue", "deleteQTE", "deleteShopItem", "deleteThrowable", "despawnMob", "editItemCraftingRecipes", "findItem", "findStandardChestItem", "forceRespawn", "getAuraInfo", "getBlock", "getBlockCoordinatesPlayerStandingOn", "getBlockData", "getBlockId", "getBlockSolidity", "getBlockTypesPlayerStandingOn", "getChunk", "getClientOption", "getCraftingRecipesForPlayer", "getCurrentKillstreak", "getDefaultMobSetting", "getEffectLevel", "getEffects", "getEmptyChunk", "getEntitiesInRect", "getEntityHeading", "getEntityName", "getEntityRotation", "getEntityType", "getHealth", "getHeldItem", "getInitialItemMetadata", "getInventoryFreeSlotCount", "getInventoryItemAmount", "getItemDropName", "getItemIDsOverlappingWithPlayer", "getItemSlot", "getItemStat", "getLifeformScale", "getLobbyDbValue", "getLobbyName", "getLobbyType", "getMetaInfo", "getMobAiState", "getMobDbId", "getMobIds", "getMobSetting", "getMoonstoneChestItems", "getMoonstoneChestItemSlot", "getNumMobs", "getNumPlayers", "getOtherEntitySetting", "getPlayerCosmetic", "getPlayerDbId", "getPlayerDbValue", "getPlayerFacingInfo", "getPlayerGamemode", "getPlayerId", "getPlayerIdFromDbId", "getPlayerIds", "getPlayerPartyWhenJoined", "getPlayerPhysicsState", "getPlayerTargetInfo", "getPosition", "getQueuedStatus", "getSelectedInventorySlotI", "getShieldAmount", "getStandardChestFreeSlotCount", "getStandardChestItemAmount", "getStandardChestItems", "getStandardChestItemSlot", "getUnitCoordinatesLifeformWithin", "getVelocity", "giveItem", "giveStandardChestItem", "hasActiveQTE", "hasEffect", "hasItem", "initiateMiddleScreenBar", "inventoryIsFull", "isAlive", "isBlockInLoadedChunk", "isInsideRect", "isMobile", "isNearInterrupt", "isPlayerCrouching", "isPublicLobby", "kickPlayer", "killLifeform", "matchmakePlayer", "now", "openChestForPlayer", "openShop", "passifyHostility", "playClientPredictedSound", "playerIsInGame", "playerIsLoggedIn", "playParticleEffect", "playSound", "preventFallDamageNextGrounding", "progressBarUpdate", "queueCrosshairText", "queueMiddleTextLower", "queueMiddleTextUpper", "raycastForBlock", "removeAppliedSkin", "removeEffect", "removeFollowingEntityFromPlayer", "removeFromQueue", "removeItemCraftingRecipes", "removeItemName", "removeItemNameFromStandardChest", "removeMiddleScreenBar", "resetCanChangeBlock", "resetCanChangeBlockRect", "resetCanChangeBlockType", "resetCanPickUpItem", "resetItemCraftingRecipes", "resetShopItemForPlayer", "scalePlayerMeshNodes", "sendFlyingMiddleMessage", "sendHitmarker", "sendMessage", "sendOverShopInfo", "sendTopRightHelper", "setAuraLevel", "setBlock", "setBlockData", "setBlockRect", "setBlockWalls", "setCallbackValueFallback", "setCameraDirection", "setCameraZoom", "setCanChangeBlock", "setCanChangeBlockRect", "setCanChangeBlockType", "setCantChangeBlock", "setCantChangeBlockRect", "setCantChangeBlockType", "setCantPickUpItem", "setClientOption", "setClientOptions", "setClientOptionToDefault", "setDefaultMobSetting", "setDirectionArrow", "setEntityHeading", "setEntityRotation", "setEveryoneSettingForPlayer", "setHealth", "setItemAmount", "setItemSlot", "setItemStat", "setLifeformScale", "setLobbyDbValue", "setMaxPlayers", "setMobAiState", "setMobSetting", "setMoonstoneChestItemSlot", "setOtherEntitySetting", "setOtherEntitySettings", "setOtherEntitySettingToDefault", "setPlayerDbValue", "setPlayerGamemode", "setPlayerOpacity", "setPlayerOpacityForOnePlayer", "setPlayerPhysicsState", "setPlayerPose", "setPosition", "setSelectedInventorySlotI", "setShieldAmount", "setStandardChestItemSlot", "setTargetedPlayerSettingForEveryone", "setTotalAura", "setVelocity", "setWalkThroughRect", "setWalkThroughType", "shakePlayerCamera", "showShopTutorial", "updateAudioEntity", "updateEntityNodeMeshAttachment", "updateMeshEntity", "updateMeshParticleSystems", "updateShopItem", "updateShopItemForPlayer"];
+const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "onBlockStandStart", "onBlockStandStop", "onChestUpdated", "onChunkLoaded", "onClientOptionUpdated", "onClose", "onCreateBloxdMeshEntity", "onEntityCollision", "onInventoryUpdated", "onItemDropCreated", "onMobDamagingOtherMob", "onMobDamagingPlayer", "onMobDespawned", "onMobKilledOtherMob", "onMobKilledPlayer", "onMobSettingUpdated", "onPlayerAltAction", "onPlayerAttack", "onPlayerAttemptAltAction", "onPlayerAttemptCraft", "onPlayerAttemptOpenChest", "onPlayerAttemptSpawnMob", "onPlayerBoughtShopItem", "onPlayerBreakMeshEntity", "onPlayerChangeBlock", "onPlayerChat", "onPlayerClick", "onPlayerClickUp", "onPlayerCraft", "onPlayerDamagingMeshEntity", "onPlayerDamagingMob", "onPlayerDamagingOtherPlayer", "onPlayerDropItem", "onPlayerEnteredVehicle", "onPlayerExitedVehicle", "onPlayerFinishChargingItem", "onPlayerFinishQTE", "onPlayerJoin", "onPlayerJump", "onPlayerKilledMob", "onPlayerKilledOtherPlayer", "onPlayerLeave", "onPlayerMoveInvenItem", "onPlayerMoveInvenItemWithAmt", "onPlayerMoveItemIntoIdxs", "onPlayerMoveItemOutOfInventory", "onPlayerOpenedChest", "onPlayerPickedUpItem", "onPlayerPlayedEmote", "onPlayerPotionEffect", "onPlayerRequestChunk", "onPlayerSelectInventorySlot", "onPlayerSpawnMob", "onPlayerStartChargingItem", "onPlayerSwapInvenSlots", "onPlayerThrowableHitTerrain", "onPlayerToggledShopMenu", "onPlayerUsedThrowable", "onRespawnRequest", "onTaskClaimed", "onTouchscreenActionButton", "onWorldAttemptDespawnMob", "onWorldAttemptSpawnMob", "onWorldChangeBlock", "onWorldSpawnMob", "playerCommand", "tick"];
+
+    let SUG = [];
+    let tipOn = true, idx = 0, list = [];
+    const ed = document.getElementById("ed");
+    const nums = document.getElementById("nums");
+    const ac = document.getElementById("ac");
+
+    function toast(m) {
+      const t = document.getElementById("toast");
+      t.textContent = m;
+      t.classList.add("show");
+      clearTimeout(t._t);
+      t._t = setTimeout(() => t.classList.remove("show"), 2200);
+    }
+
+    function buildSug(cbs, apis) {
+      const out = [];
+      cbs.forEach(c => out.push({ name: c, k: "cb", ins: c + " = (...args) => {\n  \n};" }));
+      apis.forEach(a => {
+        const method = String(a).replace(/^api\./, "");
+        out.push({ name: "api." + method, k: "api", ins: "api." + method + "()" });
+      });
+      ["preventDeath","preventChange","preventAction","preventDamage","preventDrop","preventCraft","keepInventory"].forEach(k => {
+        out.push({ name: k, k: "kw", ins: '"' + k + '"' });
+      });
+      return out;
+    }
+
+    function renderDocsLists(cbs, apis) {
+      const box = document.getElementById("docsLists");
+      let html = "<h4>コールバック全部 · " + cbs.length + "件</h4>";
+      cbs.forEach(c => {
+        html += '<div class="sig" data-ins="' + c + ' = (...args) => {&#10;  &#10;};">' + c + '</div>';
+      });
+      html += "<h4>API全部 · " + apis.length + "件</h4>";
+      apis.forEach(a => {
+        const method = String(a).replace(/^api\./, "");
+        html += '<div class="sig" data-ins="api.' + method + '()">api.' + method + '()</div>';
+      });
+      box.innerHTML = html;
+      box.querySelectorAll(".sig").forEach(function(el) {
+        el.onclick = function() {
+          var ins = el.getAttribute("data-ins").replace(/&#10;/g, "\n");
+          var pos = ed.selectionStart;
+          ed.value = ed.value.slice(0, pos) + ins + ed.value.slice(pos);
+          ed.selectionStart = ed.selectionEnd = pos + ins.length;
+          updateNums();
+          ed.focus();
+          toast("挿入しました");
+        };
+      });
+    }
+
+    function applyLists(cbs, apis, label) {
+      SUG = buildSug(cbs, apis);
+      renderDocsLists(cbs, apis);
+      document.getElementById("loadStatus").textContent = label;
+      document.getElementById("st").textContent = "API " + apis.length + " · CB " + cbs.length;
+    }
+
+    function parseCallbacks(md) {
+      const names = new Set();
+      md.split("\n").forEach(line => {
+        const m = line.match(/^## ([a-zA-Z][a-zA-Z0-9]*)\s*$/);
+        if (m) names.add(m[1]);
+      });
+      const block = md.match(/```text\n([\s\S]*?)```/);
+      if (block) {
+        block[1].split(/\s+/).forEach(w => {
+          if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(w)) names.add(w);
+        });
+      }
+      names.delete("Callbacks");
+      return Array.from(names).sort();
+    }
+    function parseApis(md) {
+      const names = [];
+      md.split("\n").forEach(line => {
+        const m = line.match(/^## ([a-zA-Z][a-zA-Z0-9]*)\s*$/);
+        if (m) names.push(m[1]);
+      });
+      return names;
+    }
+
+    async function refreshDocs() {
+      const st = document.getElementById("loadStatus");
+      st.textContent = "更新中…";
+      st.style.color = "var(--yellow)";
+      try {
+        const [cbRes, apiRes] = await Promise.all([
+          fetch("https://raw.githubusercontent.com/Bloxdy/code-api/main/CALLBACKS.md", { cache: "no-store" }),
+          fetch("https://raw.githubusercontent.com/Bloxdy/code-api/main/API_REFERENCE.md", { cache: "no-store" })
+        ]);
+        if (!cbRes.ok || !apiRes.ok) throw new Error("fetch failed");
+        const cbs = parseCallbacks(await cbRes.text());
+        const apis = parseApis(await apiRes.text());
+        if (!cbs.length || !apis.length) throw new Error("empty");
+        applyLists(cbs, apis, "最新");
+        st.style.color = "var(--green)";
+        toast("最新を取得（API " + apis.length + " / CB " + cbs.length + "）");
+        try { localStorage.setItem("bloxd_api_cache", JSON.stringify({ cbs, apis, t: Date.now() })); } catch (e) {}
+      } catch (err) {
+        st.textContent = "内蔵一覧";
+        st.style.color = "var(--green)";
+        toast("外部取得不可 → 内蔵一覧を使用");
+      }
+    }
+
+    function updateNums() {
+      const n = ed.value.split("\n").length;
+      let h = "";
+      for (let i = 1; i <= Math.max(n, 12); i++) h += "<div>" + i + "</div>";
+      nums.innerHTML = h;
+      nums.scrollTop = ed.scrollTop;
+    }
+    function updatePos() {
+      const t = ed.value.slice(0, ed.selectionStart).split("\n");
+      document.getElementById("ln").textContent = t.length;
+      document.getElementById("col").textContent = t[t.length - 1].length + 1;
+    }
+    function word() {
+      const m = ed.value.slice(0, ed.selectionStart).match(/([a-zA-Z_][\w.]*)$/);
+      return m ? m[1] : "";
+    }
+    function showAc() {
+      if (!tipOn || !SUG.length) { hideAc(); return; }
+      const w = word();
+      if (w.length < 1) { hideAc(); return; }
+      const l = w.toLowerCase();
+      list = SUG.filter(s => s.name.toLowerCase().includes(l)).slice(0, 14);
+      if (!list.length) { hideAc(); return; }
+      idx = 0;
+      drawAc();
+      ac.classList.add("show");
+    }
+    function drawAc() {
+      ac.innerHTML = list.map((s, i) =>
+        '<div class="ac-item ' + (i === idx ? "on" : "") + '" data-i="' + i + '">' +
+          '<span class="n">' + s.name + '</span>' +
+          '<span class="k ' + s.k + '">' + (s.k === "api" ? "API" : s.k === "cb" ? "CB" : "") + '</span>' +
+        '</div>'
+      ).join("");
+      ac.querySelectorAll(".ac-item").forEach(el => {
+        el.onmousedown = function(e) { e.preventDefault(); pick(list[+el.dataset.i]); };
+        el.ontouchstart = function(e) { e.preventDefault(); pick(list[+el.dataset.i]); };
+      });
+    }
+    function hideAc() { ac.classList.remove("show"); list = []; }
+    function pick(s) {
+      const pos = ed.selectionStart;
+      const before = ed.value.slice(0, pos);
+      const after = ed.value.slice(pos);
+      const w = word();
+      const nb = before.slice(0, before.length - w.length) + s.ins;
+      ed.value = nb + after;
+      ed.selectionStart = ed.selectionEnd = nb.length;
+      hideAc(); updateNums(); updatePos(); ed.focus();
+    }
+
+    ed.addEventListener("input", function() { updateNums(); updatePos(); showAc(); });
+    ed.addEventListener("scroll", function() { nums.scrollTop = ed.scrollTop; });
+    ed.addEventListener("click", updatePos);
+    ed.addEventListener("keyup", function(e) {
+      if (["ArrowUp","ArrowDown","Enter","Tab","Escape"].indexOf(e.key) === -1) { updatePos(); showAc(); }
+    });
+    ed.addEventListener("keydown", function(e) {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        if (ac.classList.contains("show") && list.length) { pick(list[idx]); return; }
+        const s = ed.selectionStart, en = ed.selectionEnd;
+        ed.value = ed.value.slice(0, s) + "  " + ed.value.slice(en);
+        ed.selectionStart = ed.selectionEnd = s + 2;
+        updateNums();
+      }
+      if (ac.classList.contains("show")) {
+        if (e.key === "ArrowDown") { e.preventDefault(); idx = Math.min(idx + 1, list.length - 1); drawAc(); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); idx = Math.max(idx - 1, 0); drawAc(); }
+        else if (e.key === "Enter") { e.preventDefault(); if (list[idx]) pick(list[idx]); }
+        else if (e.key === "Escape") hideAc();
+      }
+    });
+
+    function copyCode() {
+      var text = ed.value;
+      if (!text.trim()) { toast("コピーするコードがありません"); return; }
+      ed.focus();
+      ed.select();
+      ed.setSelectionRange(0, text.length);
+      if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function() {
+          toast("コピーしました");
+          document.getElementById("st").textContent = "Copied";
+        }).catch(function() { tryExecCopy(text); });
+        return;
+      }
+      tryExecCopy(text);
+    }
+    function tryExecCopy(text) {
+      try {
+        if (document.execCommand("copy")) {
+          toast("コピーしました");
+          document.getElementById("st").textContent = "Copied";
+          return;
+        }
+      } catch (e) {}
+      toast("全文選択中 → 長押しで「コピー」");
+      document.getElementById("st").textContent = "手動コピー";
+    }
+    function shareCode() {
+      var text = ed.value;
+      if (!text.trim()) { toast("共有するコードがありません"); return; }
+      if (navigator.share) {
+        navigator.share({ text: text }).catch(function() { copyCode(); });
+      } else {
+        copyCode();
+      }
+    }
+    function toggleDocs() { document.getElementById("docs").classList.toggle("show"); }
+    function toggleTip() {
+      tipOn = !tipOn;
+      document.getElementById("tipBtn").textContent = tipOn ? "Hide Tips" : "Show Tips";
+      if (!tipOn) hideAc();
+      toast(tipOn ? "候補 ON" : "候補 OFF");
+    }
+    function clearEditor() {
+      if (ed.value && !confirm("エディタを空にしますか？")) return;
+      ed.value = ""; updateNums(); updatePos(); hideAc(); toast("クリアしました");
+    }
+
+    applyLists(BUILTIN_CB, BUILTIN_API, "内蔵一覧");
+    updateNums();
+    refreshDocs();
+    ed.focus();
+  </script>
+</body>
+</html>
