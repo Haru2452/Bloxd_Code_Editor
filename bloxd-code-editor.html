@@ -50,13 +50,19 @@
     }
     .ac {
       position: absolute; z-index: 50; background: #1e1e2c; border: 1px solid var(--border);
-      border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.45); max-height: 240px;
-      overflow-y: auto; display: none; min-width: 280px; max-width: 90vw; bottom: 12px; left: 44px;
+      border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+      max-height: min(40vh, 280px);
+      overflow-y: auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      display: none; min-width: 280px; max-width: 90vw; bottom: 12px; left: 44px;
     }
     .ac.show { display: block; }
     .ac-item {
-      padding: 8px 12px; font: 12px/1.4 ui-monospace, Consolas, monospace;
+      padding: 10px 12px; font: 12px/1.4 ui-monospace, Consolas, monospace;
       cursor: pointer; display: flex; justify-content: space-between; gap: 10px;
+      -webkit-user-select: none; user-select: none;
     }
     .ac-item:hover, .ac-item.on { background: #2a2a3e; }
     .ac-item .n { color: var(--blue); word-break: break-all; }
@@ -122,7 +128,7 @@
     <div class="editor-side">
       <div class="lines">
         <div class="nums" id="nums"></div>
-        <textarea id="ed" spellcheck="false" placeholder="// コードを入力… api. や onPlayer で候補&#10;// Copy / 共有 でスマホでも取り出せます"></textarea>
+        <textarea id="ed" spellcheck="false" placeholder="// コードを入力…\n// api. のあと → API候補\n// onPlayer など → Callback候補&#10;// Copy / 共有 でスマホでも取り出せます"></textarea>
       </div>
       <div class="ac" id="ac"></div>
     </div>
@@ -159,7 +165,79 @@
   <div class="toast" id="toast"></div>
   <script>
 const BUILTIN_API = ["addCustomKillfeedMessage", "addFollowingEntityToPlayer", "addQTE", "animateEntity", "applyAuraChange", "applyEffect", "applyHealthChange", "applyImpulse", "applyMeleeHit", "attemptApplyDamage", "attemptCreateAudioEntity", "attemptCreateMeshEntity", "attemptCreateThrowable", "attemptSpawnMob", "attemptWorldChangeBlock", "blockCoordToChunkId", "blockIdToBlockName", "blockNameToBlockId", "broadcastMessage", "broadcastSound", "calcExplosionForce", "canOpenStandardChest", "changePlayerIntoSkin", "checkValid", "chunkIdToBotLeftCoord", "clearDirectionArrow", "clearInventory", "clearKillstreak", "closeChestForPlayer", "configureShopCategory", "configureShopCategoryForPlayer", "copyChunk", "createEnchantmentAttributesForItem", "createItemDrop", "createMobHerd", "createShopItem", "createShopItemForPlayer", "deleteAllItems", "deleteAllLobbyDbValues", "deleteAllPlayerDbValues", "deleteAudioEntity", "deleteItemDrop", "deleteLobbyDbValue", "deleteMeshEntity", "deletePlayerDbValue", "deleteQTE", "deleteShopItem", "deleteThrowable", "despawnMob", "editItemCraftingRecipes", "findItem", "findStandardChestItem", "forceRespawn", "getAuraInfo", "getBlock", "getBlockCoordinatesPlayerStandingOn", "getBlockData", "getBlockId", "getBlockSolidity", "getBlockTypesPlayerStandingOn", "getChunk", "getClientOption", "getCraftingRecipesForPlayer", "getCurrentKillstreak", "getDefaultMobSetting", "getEffectLevel", "getEffects", "getEmptyChunk", "getEntitiesInRect", "getEntityHeading", "getEntityName", "getEntityRotation", "getEntityType", "getHealth", "getHeldItem", "getInitialItemMetadata", "getInventoryFreeSlotCount", "getInventoryItemAmount", "getItemDropName", "getItemIDsOverlappingWithPlayer", "getItemSlot", "getItemStat", "getLifeformScale", "getLobbyDbValue", "getLobbyName", "getLobbyType", "getMetaInfo", "getMobAiState", "getMobDbId", "getMobIds", "getMobSetting", "getMoonstoneChestItems", "getMoonstoneChestItemSlot", "getNumMobs", "getNumPlayers", "getOtherEntitySetting", "getPlayerCosmetic", "getPlayerDbId", "getPlayerDbValue", "getPlayerFacingInfo", "getPlayerGamemode", "getPlayerId", "getPlayerIdFromDbId", "getPlayerIds", "getPlayerPartyWhenJoined", "getPlayerPhysicsState", "getPlayerTargetInfo", "getPosition", "getQueuedStatus", "getSelectedInventorySlotI", "getShieldAmount", "getStandardChestFreeSlotCount", "getStandardChestItemAmount", "getStandardChestItems", "getStandardChestItemSlot", "getUnitCoordinatesLifeformWithin", "getVelocity", "giveItem", "giveStandardChestItem", "hasActiveQTE", "hasEffect", "hasItem", "initiateMiddleScreenBar", "inventoryIsFull", "isAlive", "isBlockInLoadedChunk", "isInsideRect", "isMobile", "isNearInterrupt", "isPlayerCrouching", "isPublicLobby", "kickPlayer", "killLifeform", "matchmakePlayer", "now", "openChestForPlayer", "openShop", "passifyHostility", "playClientPredictedSound", "playerIsInGame", "playerIsLoggedIn", "playParticleEffect", "playSound", "preventFallDamageNextGrounding", "progressBarUpdate", "queueCrosshairText", "queueMiddleTextLower", "queueMiddleTextUpper", "raycastForBlock", "removeAppliedSkin", "removeEffect", "removeFollowingEntityFromPlayer", "removeFromQueue", "removeItemCraftingRecipes", "removeItemName", "removeItemNameFromStandardChest", "removeMiddleScreenBar", "resetCanChangeBlock", "resetCanChangeBlockRect", "resetCanChangeBlockType", "resetCanPickUpItem", "resetItemCraftingRecipes", "resetShopItemForPlayer", "scalePlayerMeshNodes", "sendFlyingMiddleMessage", "sendHitmarker", "sendMessage", "sendOverShopInfo", "sendTopRightHelper", "setAuraLevel", "setBlock", "setBlockData", "setBlockRect", "setBlockWalls", "setCallbackValueFallback", "setCameraDirection", "setCameraZoom", "setCanChangeBlock", "setCanChangeBlockRect", "setCanChangeBlockType", "setCantChangeBlock", "setCantChangeBlockRect", "setCantChangeBlockType", "setCantPickUpItem", "setClientOption", "setClientOptions", "setClientOptionToDefault", "setDefaultMobSetting", "setDirectionArrow", "setEntityHeading", "setEntityRotation", "setEveryoneSettingForPlayer", "setHealth", "setItemAmount", "setItemSlot", "setItemStat", "setLifeformScale", "setLobbyDbValue", "setMaxPlayers", "setMobAiState", "setMobSetting", "setMoonstoneChestItemSlot", "setOtherEntitySetting", "setOtherEntitySettings", "setOtherEntitySettingToDefault", "setPlayerDbValue", "setPlayerGamemode", "setPlayerOpacity", "setPlayerOpacityForOnePlayer", "setPlayerPhysicsState", "setPlayerPose", "setPosition", "setSelectedInventorySlotI", "setShieldAmount", "setStandardChestItemSlot", "setTargetedPlayerSettingForEveryone", "setTotalAura", "setVelocity", "setWalkThroughRect", "setWalkThroughType", "shakePlayerCamera", "showShopTutorial", "updateAudioEntity", "updateEntityNodeMeshAttachment", "updateMeshEntity", "updateMeshParticleSystems", "updateShopItem", "updateShopItemForPlayer"];
-const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "onBlockStandStart", "onBlockStandStop", "onChestUpdated", "onChunkLoaded", "onClientOptionUpdated", "onClose", "onCreateBloxdMeshEntity", "onEntityCollision", "onInventoryUpdated", "onItemDropCreated", "onMobDamagingOtherMob", "onMobDamagingPlayer", "onMobDespawned", "onMobKilledOtherMob", "onMobKilledPlayer", "onMobSettingUpdated", "onPlayerAltAction", "onPlayerAttack", "onPlayerAttemptAltAction", "onPlayerAttemptCraft", "onPlayerAttemptOpenChest", "onPlayerAttemptSpawnMob", "onPlayerBoughtShopItem", "onPlayerBreakMeshEntity", "onPlayerChangeBlock", "onPlayerChat", "onPlayerClick", "onPlayerClickUp", "onPlayerCraft", "onPlayerDamagingMeshEntity", "onPlayerDamagingMob", "onPlayerDamagingOtherPlayer", "onPlayerDropItem", "onPlayerEnteredVehicle", "onPlayerExitedVehicle", "onPlayerFinishChargingItem", "onPlayerFinishQTE", "onPlayerJoin", "onPlayerJump", "onPlayerKilledMob", "onPlayerKilledOtherPlayer", "onPlayerLeave", "onPlayerMoveInvenItem", "onPlayerMoveInvenItemWithAmt", "onPlayerMoveItemIntoIdxs", "onPlayerMoveItemOutOfInventory", "onPlayerOpenedChest", "onPlayerPickedUpItem", "onPlayerPlayedEmote", "onPlayerPotionEffect", "onPlayerRequestChunk", "onPlayerSelectInventorySlot", "onPlayerSpawnMob", "onPlayerStartChargingItem", "onPlayerSwapInvenSlots", "onPlayerThrowableHitTerrain", "onPlayerToggledShopMenu", "onPlayerUsedThrowable", "onRespawnRequest", "onTaskClaimed", "onTouchscreenActionButton", "onWorldAttemptDespawnMob", "onWorldAttemptSpawnMob", "onWorldChangeBlock", "onWorldSpawnMob", "playerCommand", "tick"];
+const CB_SIGS = {
+      "doPeriodicSave": "",
+      "onAttemptKillPlayer": "killedPlayer, attackingLifeform",
+      "onBlockStand": "playerId, x, y, z, blockName",
+      "onBlockStandStart": "playerId, x, y, z, blockName",
+      "onBlockStandStop": "playerId, x, y, z, blockName",
+      "onChestUpdated": "initiatorEId, isMoonstoneChest, x, y, z",
+      "onChunkLoaded": "chunkId, chunk, wasPersistedChunk",
+      "onClientOptionUpdated": "playerId, option, value",
+      "onClose": "serverIsShuttingDown",
+      "onCreateBloxdMeshEntity": "eId, type, initiatorId",
+      "onEntityCollision": "eId, otherEId",
+      "onInventoryUpdated": "playerId",
+      "onItemDropCreated": "itemEId, itemName, itemAmount, x, y, z",
+      "onMobDamagingOtherMob": "attackingMob, damagedMob, damageDealt, withItem",
+      "onMobDamagingPlayer": "attackingMob, damagedPlayer, damageDealt, withItem",
+      "onMobDespawned": "mobId",
+      "onMobKilledOtherMob": "attackingMob, killedMob, damageDealt, withItem",
+      "onMobKilledPlayer": "attackingMob, killedPlayer, damageDealt, withItem",
+      "onMobSettingUpdated": "mobId, setting, value",
+      "onPlayerAltAction": "playerId, x, y, z, block, targetEId",
+      "onPlayerAttack": "playerId",
+      "onPlayerAttemptAltAction": "playerId, x, y, z, block, targetEId",
+      "onPlayerAttemptCraft": "playerId, itemName, craftingIdx, craftTimes",
+      "onPlayerAttemptOpenChest": "playerId, x, y, z, isMoonstoneChest, isIronChest",
+      "onPlayerAttemptSpawnMob": "playerId, mobType, x, y, z",
+      "onPlayerBoughtShopItem": "playerId, categoryKey, itemKey, item, userInput",
+      "onPlayerBreakMeshEntity": "playerId, entityId",
+      "onPlayerChangeBlock": "playerId, x, y, z, fromBlock, toBlock, droppedItem, fromBlockInfo, toBlockInfo",
+      "onPlayerChat": "playerId, chatMessage, channelName",
+      "onPlayerClick": "playerId, wasAltClick, x, y, z, block, targetEId",
+      "onPlayerClickUp": "playerId, wasAltClick, x, y, z, block, targetEId",
+      "onPlayerCraft": "playerId, itemName, craftingIdx, recipe, craftTimes",
+      "onPlayerDamagingMeshEntity": "playerId, damagedId, damageDealt, withItem",
+      "onPlayerDamagingMob": "playerId, mobId, damageDealt, withItem, damagerDbId",
+      "onPlayerDamagingOtherPlayer": "attackingPlayer, damagedPlayer, damageDealt, withItem, bodyPartHit, damagerDbId",
+      "onPlayerDropItem": "playerId, x, y, z, itemName, itemAmount, fromIdx",
+      "onPlayerEnteredVehicle": "playerId, vehicleType, vehicleEId",
+      "onPlayerExitedVehicle": "playerId, vehicleType, vehicleEId",
+      "onPlayerFinishChargingItem": "playerId, used, itemName, duration",
+      "onPlayerFinishQTE": "playerId, qteId, result",
+      "onPlayerJoin": "playerId, fromGameReset",
+      "onPlayerJump": "playerId",
+      "onPlayerKilledMob": "playerId, mobId, damageDealt, withItem",
+      "onPlayerKilledOtherPlayer": "attackingPlayer, killedPlayer, damageDealt, withItem",
+      "onPlayerLeave": "playerId, serverIsShuttingDown",
+      "onPlayerMoveInvenItem": "playerId, fromIdx, toStartIdx, toEndIdx, amt",
+      "onPlayerMoveInvenItemWithAmt": "playerId, i, j, amt",
+      "onPlayerMoveItemIntoIdxs": "playerId, start, end, moveIdx, itemAmount",
+      "onPlayerMoveItemOutOfInventory": "playerId, itemName, itemAmount, fromIdx, movementType",
+      "onPlayerOpenedChest": "playerId, x, y, z, isMoonstoneChest, isIronChest",
+      "onPlayerPickedUpItem": "playerId, itemName, itemAmount, itemEntityId",
+      "onPlayerPlayedEmote": "playerId, emoteId",
+      "onPlayerPotionEffect": "initiatorId, targetId, effectName",
+      "onPlayerRequestChunk": "playerId, chunkX, chunkY, chunkZ, chunkId",
+      "onPlayerSelectInventorySlot": "playerId, slotIndex",
+      "onPlayerSpawnMob": "playerId, mobId, mobType, x, y, z, mobHerdId, playSoundOnSpawn",
+      "onPlayerStartChargingItem": "playerId, itemName",
+      "onPlayerSwapInvenSlots": "playerId, i, j",
+      "onPlayerThrowableHitTerrain": "playerId, throwableName, thrownEntityId",
+      "onPlayerToggledShopMenu": "playerId, isOpen",
+      "onPlayerUsedThrowable": "playerId, throwableName, thrownEntityId",
+      "onRespawnRequest": "playerId",
+      "onTaskClaimed": "playerId, taskId, isPromoTask, claimedRewards",
+      "onTouchscreenActionButton": "playerId, touchDown",
+      "onWorldAttemptDespawnMob": "mobId",
+      "onWorldAttemptSpawnMob": "mobType, x, y, z",
+      "onWorldChangeBlock": "x, y, z, fromBlock, toBlock, initiatorDbId, extraInfo",
+      "onWorldSpawnMob": "mobId, mobType, x, y, z, mobHerdId, playSoundOnSpawn",
+      "playerCommand": "playerId, command",
+      "tick": "ms"
+    };
+    const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "onBlockStandStart", "onBlockStandStop", "onChestUpdated", "onChunkLoaded", "onClientOptionUpdated", "onClose", "onCreateBloxdMeshEntity", "onEntityCollision", "onInventoryUpdated", "onItemDropCreated", "onMobDamagingOtherMob", "onMobDamagingPlayer", "onMobDespawned", "onMobKilledOtherMob", "onMobKilledPlayer", "onMobSettingUpdated", "onPlayerAltAction", "onPlayerAttack", "onPlayerAttemptAltAction", "onPlayerAttemptCraft", "onPlayerAttemptOpenChest", "onPlayerAttemptSpawnMob", "onPlayerBoughtShopItem", "onPlayerBreakMeshEntity", "onPlayerChangeBlock", "onPlayerChat", "onPlayerClick", "onPlayerClickUp", "onPlayerCraft", "onPlayerDamagingMeshEntity", "onPlayerDamagingMob", "onPlayerDamagingOtherPlayer", "onPlayerDropItem", "onPlayerEnteredVehicle", "onPlayerExitedVehicle", "onPlayerFinishChargingItem", "onPlayerFinishQTE", "onPlayerJoin", "onPlayerJump", "onPlayerKilledMob", "onPlayerKilledOtherPlayer", "onPlayerLeave", "onPlayerMoveInvenItem", "onPlayerMoveInvenItemWithAmt", "onPlayerMoveItemIntoIdxs", "onPlayerMoveItemOutOfInventory", "onPlayerOpenedChest", "onPlayerPickedUpItem", "onPlayerPlayedEmote", "onPlayerPotionEffect", "onPlayerRequestChunk", "onPlayerSelectInventorySlot", "onPlayerSpawnMob", "onPlayerStartChargingItem", "onPlayerSwapInvenSlots", "onPlayerThrowableHitTerrain", "onPlayerToggledShopMenu", "onPlayerUsedThrowable", "onRespawnRequest", "onTaskClaimed", "onTouchscreenActionButton", "onWorldAttemptDespawnMob", "onWorldAttemptSpawnMob", "onWorldChangeBlock", "onWorldSpawnMob", "playerCommand", "tick"];
 
     let SUG = [];
     let tipOn = true, idx = 0, list = [];
@@ -175,13 +253,23 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       t._t = setTimeout(() => t.classList.remove("show"), 2200);
     }
 
+    function cbIns(name) {
+      const params = (typeof CB_SIGS !== "undefined" && CB_SIGS[name] != null) ? CB_SIGS[name] : "";
+      return name + " = (" + params + ") => {\n  \n};";
+    }
     function buildSug(cbs, apis) {
       const out = [];
-      cbs.forEach(c => out.push({ name: c, k: "cb", ins: c + " = (...args) => {\n  \n};" }));
+      // 公式コールバックのみ（名前が on/tick/player/do で始まるもの）
+      cbs.forEach(c => {
+        if (!/^(on|tick|player|do)[A-Za-z0-9]*$/.test(c) && c !== "tick") return;
+        out.push({ name: c, k: "cb", ins: cbIns(c) });
+      });
       apis.forEach(a => {
         const method = String(a).replace(/^api\./, "");
+        if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(method)) return;
         out.push({ name: "api." + method, k: "api", ins: "api." + method + "()" });
       });
+      // 返り値キーワードは prevent など十分長いときだけ候補に出す
       ["preventDeath","preventChange","preventAction","preventDamage","preventDrop","preventCraft","keepInventory"].forEach(k => {
         out.push({ name: k, k: "kw", ins: '"' + k + '"' });
       });
@@ -192,7 +280,9 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       const box = document.getElementById("docsLists");
       let html = "<h4>コールバック全部 · " + cbs.length + "件</h4>";
       cbs.forEach(c => {
-        html += '<div class="sig" data-ins="' + c + ' = (...args) => {&#10;  &#10;};">' + c + '</div>';
+        if (!/^(on|tick|player|do)[A-Za-z0-9]*$/.test(c) && c !== "tick") return;
+        var ins = cbIns(c).replace(/\n/g, "&#10;");
+        html += '<div class="sig" data-ins="' + ins + '">' + c + "(" + ((CB_SIGS && CB_SIGS[c]) || "") + ")</div>';
       });
       html += "<h4>API全部 · " + apis.length + "件</h4>";
       apis.forEach(a => {
@@ -224,14 +314,8 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       const names = new Set();
       md.split("\n").forEach(line => {
         const m = line.match(/^## ([a-zA-Z][a-zA-Z0-9]*)\s*$/);
-        if (m) names.add(m[1]);
+        if (m && (/^(on|tick|player|do)/.test(m[1]))) names.add(m[1]);
       });
-      const block = md.match(/```text\n([\s\S]*?)```/);
-      if (block) {
-        block[1].split(/\s+/).forEach(w => {
-          if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(w)) names.add(w);
-        });
-      }
       names.delete("Callbacks");
       return Array.from(names).sort();
     }
@@ -289,7 +373,23 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       const w = word();
       if (w.length < 1) { hideAc(); return; }
       const l = w.toLowerCase();
-      list = SUG.filter(s => s.name.toLowerCase().includes(l)).slice(0, 14);
+      // API候補は「api.」と打ち始めてからだけ表示
+      if (l.startsWith("api.")) {
+        const q = l.slice(4);
+        list = SUG.filter(s => s.k === "api" && s.name.toLowerCase().startsWith("api." + q)).slice(0, 40);
+      } else if (l === "api") {
+        hideAc();
+        return;
+      } else {
+        // コールバック・キーワードのみ。先頭一致（includes だと a で大量ヒットするため）
+        // 1文字だけならコールバックは出さない（誤爆防止）
+        if (l.length < 2) { hideAc(); return; }
+        list = SUG.filter(s => {
+          if (s.k !== "cb" && s.k !== "kw") return false;
+          const n = s.name.toLowerCase();
+          return n.startsWith(l);
+        }).slice(0, 40);
+      }
       if (!list.length) { hideAc(); return; }
       idx = 0;
       drawAc();
@@ -302,10 +402,25 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
           '<span class="k ' + s.k + '">' + (s.k === "api" ? "API" : s.k === "cb" ? "CB" : "") + '</span>' +
         '</div>'
       ).join("");
+      let touchY0 = 0, scrolled = false;
       ac.querySelectorAll(".ac-item").forEach(el => {
         el.onmousedown = function(e) { e.preventDefault(); pick(list[+el.dataset.i]); };
-        el.ontouchstart = function(e) { e.preventDefault(); pick(list[+el.dataset.i]); };
+        el.ontouchstart = function(e) {
+          touchY0 = e.touches[0].clientY;
+          scrolled = false;
+        };
+        el.ontouchmove = function(e) {
+          if (Math.abs(e.touches[0].clientY - touchY0) > 8) scrolled = true;
+        };
+        el.ontouchend = function(e) {
+          if (!scrolled) {
+            e.preventDefault();
+            pick(list[+el.dataset.i]);
+          }
+        };
       });
+      const on = ac.children[idx];
+      if (on) on.scrollIntoView({ block: "nearest" });
     }
     function hideAc() { ac.classList.remove("show"); list = []; }
     function pick(s) {
@@ -385,8 +500,12 @@ const BUILTIN_CB = ["doPeriodicSave", "onAttemptKillPlayer", "onBlockStand", "on
       toast(tipOn ? "候補 ON" : "候補 OFF");
     }
     function clearEditor() {
-      if (ed.value && !confirm("エディタを空にしますか？")) return;
-      ed.value = ""; updateNums(); updatePos(); hideAc(); toast("クリアしました");
+      ed.value = "";
+      updateNums();
+      updatePos();
+      hideAc();
+      ed.focus();
+      toast("クリアしました");
     }
 
     applyLists(BUILTIN_CB, BUILTIN_API, "内蔵一覧");
